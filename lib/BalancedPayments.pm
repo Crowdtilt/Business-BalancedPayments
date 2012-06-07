@@ -1,144 +1,151 @@
 package BalancedPayments;
+use Moo;
 
-use Modern::Perl;
-use Moose;
-use namespace::autoclean;
-use LWP::UserAgent;
-use HTTP::Request;
+use HTTP::Request::Common qw(GET POST);
 use JSON qw(from_json);
-use Data::Dumper;
+use LWP::UserAgent;
 
-use BalancedPayments::APIKey;
-use BalancedPayments::Common;
-use balancedpayments::Merchant;
-
-# ABSTRACT: BalancedPayments Perl Module
-
-has base_uri => (is => 'rw', default => 'https://api.balancedpayments.com');
-has api_version => (is => 'rw', default => 'v1');
-has common => (
+has secret      => (is => 'ro', required => 1);
+has merchant    => (is => 'rw', lazy => 1, builder => '_build_merchant');
+has marketplace => (is => 'rw', lazy => 1, builder => '_build_marketplace');
+has base_url => (
     is => 'ro',
-    lazy => 1,
-    default => sub {
-        my ($self) = @_;
-        return BalancedPayments::Common->new({
-            base_uri    => $self->base_url,
-            api_version => $self->api_version
-        });
-    }
+    default => sub { return 'https://api.balancedpayments.com' }
 );
 has ua => (
     is => 'ro',
     lazy => 1,
     default => sub {
         my $ua = LWP::UserAgent->new;
-        $ua->default_header(content_type => 'application/json');
-        $ua->timeout(5);
+        $ua->timeout(10);
         return $ua;
     },
 );
-has key => ( is => 'rw', lazy => 1, default => sub {} );
-has merchant => (is => 'rw', lazy => 1, default => sub {} );
+has api_keys_uri     => (is => 'ro', default => sub { '/v1/api_keys' });
+has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants' });
+has marketplaces_uri => (is => 'ro', default => sub { '/v1/marketplaces' });
+has cards_uri => (
+    is => 'ro',
+    lazy => 1,
+    default => sub { shift->marketplace->{cards_uri} }
+);
 
-sub BUILD {
+sub get_card {
+    my ($self, $id) = @_;
+    return $self->_get($self->cards_uri . "/$id");
+}
+
+sub create_card {
     my ($self, $args) = @_;
-
-    if ($args->{secret}) {
-        $self->_configure_processor($args->{secret});
-        return 1;
-    } else {
-        return $self->_create_api_key;
-    }
+    return $self->_post($self->cards_uri, $args);
 }
 
-sub _configure_processor{
-    my ($self, $secret) = @_;
-    $self->_get_api_key_details($secret);
-    $self->_get_merchant_details($secret);
-}
+sub _url { $_[0]->base_url . $_[1] }
 
-sub _get_merchant_details{
-    my ($self, $secret) = @_;
-
-    my $req = HTTP::Request->new;
-    $req->method("GET");
-    $req->uri($self->base_uri . '/' . $self->api_version . '/merchants');
-    $req->authorization_basic($secret, '');
-    my $response = $self->ua->request($req);
-
-    if ($response->is_success){
-        my $content = from_json($response->content);
-        if ($content->{total} == 1){
-            $self->merchant(
-                BalancedPayments::Merchant->new($content->{items}[0]));
-        } else {
-            #TODO: Handle multiple keys. I am not sure that this case actually
-            #exists. BalancedPayments documentation is not explicit about it
-            #yet.
-        }
-    } else {
-        #TODO: We need better error messages.
-        confess $response->content;
-        return 0;
-    }
-}
-
-
-sub _get_api_key_details{
-    my ($self, $secret) = @_;
-
-    my $req = HTTP::Request->new;
-    $req->method("GET");
-    $req->uri($self->base_uri . '/' . $self->api_version . '/api_keys');
-    $req->authorization_basic($secret, '');
-    my $response = $self->ua->request($req);
-
-    if ($response->is_success){
-        my $content = from_json($response->content);
-        if ($content->{total} == 1){
-            $content->{items}[0]->{secret} = $secret;
-            $self->key(BalancedPayments::APIKey->new($content->{items}[0]));
-        } else {
-            #TODO: Handle multiple keys. I am not sure that this case actually
-            #exists. BalancedPayments documentation is not explicit about it
-            #yet.
-        }
-    } else {
-        #TODO: We need better error messages.
-        confess $response->content;
-        return 0;
-    }
-}
-
-sub _create_api_key {
+sub _build_merchant {
     my ($self) = @_;
-    my $url = $self->base_uri . '/' . $self->api_version . '/api_keys';
-    my $response = $self->ua->post($url);
-    if ($response->is_success){
-        #Prepare the data from the response.
-        my $key_data = from_json($response->content);
-        $key_data->{meta_data} = $key_data->{meta};
-        delete $key_data->{meta};
-
-        my $merchant_data = $key_data->{merchant};
-        delete $key_data->{merchant};
-        $merchant_data->{meta_data} = $merchant_data->{meta};
-        delete $merchant_data->{meta};
-
-        # Create and return the approperiate objects.
-        $self->key(BalancedPayments::APIKey->new($key_data));
-        #TODO: Accept merchant parameters when creating a new key.
-        $self->merchant(BalancedPayments::Merchant->new($merchant_data));
-        return 1;
-    } else {
-        #TODO: We need better error messages.
-        confess $response->message;
-        return 0;
-    }
+    my $data = $self->_get($self->merchants_uri);
+    return $data->{items}[0];
 }
 
-__PACKAGE__->meta->make_immutable;
-return 1;
+sub _build_marketplace {
+    my ($self) = @_;
+    my $data = $self->_get($self->marketplaces_uri);
+    return $data->{items}[0];
+}
 
-__END__
+sub _get {
+    my ($self, $path) = @_;
+    return $self->_req(GET $path);
+}
 
+sub _post {
+    my ($self, $path, $params) = @_;
+    return $self->_req(POST $path, content => $params);
+}
+
+sub _req {
+    my ($self, $req) = @_;
+    $req->authorization_basic($self->secret);
+    return $self->ua->request($req);
+}
+
+sub _check_res {
+    my ($res) = @_;
+    my ($url, $method) = ($res->request->uri, $res->request->method);
+    die sprintf "Error attempting %s => %s:\n%s\n%s",
+        $method, $url, $res->status_line, $res->content
+        unless $res->is_success;
+}
+
+around qw(_get _post) => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $path = shift;
+    my $url = $self->_url($path);
+    my $res = $self->$orig($url, @_);
+    _check_res($res);
+    return from_json($res->content);
+};
+
+# ABSTRACT: BalancedPayments API bindings
+
+=head1 SYNOPSIS
+
+    use BalancedPayments;
+
+    my $secret = 'abc123';
+    my $bp = BalancedPayments->new(secret => $secret);
+
+    my $card = $bp->create_card({
+        card_number      => "5105105105105100",
+        expiration_month => 12,
+        expiration_year  => 2020,
+        security_code    => 123,
+    });
+
+    $bp->get_card($card->{id});
+
+=head1 DESCRIPTION
+
+This module provides bindings for the
+L<BalancedPayments|https://www.balancedpayments.com> API.
+
+=head1 METHODS
+
+=head2 get_card
+
+    get_card($id)
+
+Returns a credit card hashref for the given id.
+Here is an example response:
+
+    { 
+        account          => '123',
+        brand            => "MasterCard",
+        card_type        => "mastercard",
+        created_at       => "2012-06-07T11:00:40.003671Z",
+        expiration_month => 12,
+        expiration_year  => 2020,
+        id               => "CC92QRQcwUCp5zpzEz7lXKS",
+        is_valid         => 1,
+        last_four        => 5100,
+        name             => undef,
+        uri              => "/v1/marketplaces/MK98f1/cards/CC92QRQcwUCp5zpzKS",
+    }
+
+=head2 create_card
+
+    create_card({
+        card_number      => "5105105105105100",
+        expiration_month => 12,
+        expiration_year  => 2020,
+        security_code    => 123,
+    })
+
+Creates a credit card and returns the corresponding hashref.
+See L</get_card> for an example response.
+
+=cut
+
+1;
