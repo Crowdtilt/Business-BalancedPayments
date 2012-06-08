@@ -5,11 +5,13 @@ use HTTP::Request::Common qw(GET POST PUT);
 use JSON qw(from_json to_json);
 use LWP::UserAgent;
 
-requires 'base_url';
-
+has base_url => (
+    is      => 'ro',
+    default => sub { 'https://api.balancedpayments.com' }
+);
 has ua => (
-    is => 'ro',
-    lazy => 1,
+    is      => 'ro',
+    lazy    => 1,
     default => sub {
         my $ua = LWP::UserAgent->new();
         $ua->timeout(10);

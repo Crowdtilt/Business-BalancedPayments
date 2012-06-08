@@ -1,15 +1,13 @@
 package BalancedPayments;
 use Moo;
+with 'BalancedPayments::HTTP';
 
 use Carp qw(croak);
 
 has secret      => (is => 'ro', required => 1                             );
 has merchant    => (is => 'rw', lazy => 1, builder => '_build_merchant'   );
 has marketplace => (is => 'rw', lazy => 1, builder => '_build_marketplace');
-has base_url => (
-    is      => 'ro',
-    default => sub { 'https://api.balancedpayments.com' }
-);
+
 has api_keys_uri     => (is => 'ro', default => sub { '/v1/api_keys'     });
 has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants'    });
 has marketplaces_uri => (is => 'ro', default => sub { '/v1/marketplaces' });
@@ -23,8 +21,6 @@ has accounts_uri => (
     lazy    => 1,
     default => sub { shift->marketplace->{accounts_uri} }
 );
-
-with 'BalancedPayments::HTTP';
 
 sub _build_merchant {
     my ($self) = @_;
