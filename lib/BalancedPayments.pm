@@ -1,12 +1,9 @@
 package BalancedPayments;
 use Moo;
-use Data::Dump;
 
 use Carp qw(croak);
-#use URI;
-#use HTTP::Request;
 use HTTP::Request::Common qw(GET POST PUT);
-use JSON qw(from_json);
+use JSON qw(from_json to_json);
 use LWP::UserAgent;
 
 has secret      => (is => 'ro', required => 1);
@@ -15,15 +12,6 @@ has marketplace => (is => 'rw', lazy => 1, builder => '_build_marketplace');
 has base_url => (
     is => 'ro',
     default => sub { return 'https://api.balancedpayments.com' }
-);
-has ua => (
-    is => 'ro',
-    lazy => 1,
-    default => sub {
-        my $ua = LWP::UserAgent->new;
-        $ua->timeout(10);
-        return $ua;
-    },
 );
 has api_keys_uri     => (is => 'ro', default => sub { '/v1/api_keys' });
 has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants' });
@@ -38,6 +26,8 @@ has accounts_uri => (
     lazy => 1,
     default => sub { shift->marketplace->{accounts_uri} }
 );
+
+with 'BalancedPayments::HTTP';
 
 sub get_card {
     my ($self, $id) = @_;
@@ -75,66 +65,6 @@ sub add_card {
     croak 'The account requires a cards_uri field' unless $account->{cards_uri};
     return $self->_post($account->{cards_uri}, $card);
 }
-
-sub _url { $_[0]->base_url . $_[1] }
-
-sub _build_merchant {
-    my ($self) = @_;
-    my $data = $self->_get($self->merchants_uri);
-    return $data->{items}[0];
-}
-
-sub _build_marketplace {
-    my ($self) = @_;
-    my $data = $self->_get($self->marketplaces_uri);
-    return $data->{items}[0];
-}
-
-sub _get {
-    my ($self, $path) = @_;
-    return $self->_req(GET $path);
-}
-
-sub _post {
-    my ($self, $path, $params) = @_;
-    return $self->_req(POST $path, content => $params);
-}
-
-#sub _put {
-#    my ($self, $path, $params) = @_;
-#    #dd "_put: ", $path, $params;
-#    my $url = URI->new('http:');
-#    $url->query_form(%$params);
-#    my $content = $url->query;
-#    my $req = HTTP::Request->new(PUT => $path,
-#        [ content_type => 'application/x-www-form-urlencoded'], $content);
-#    return $self->_req($req);
-#}
-
-
-sub _req {
-    my ($self, $req) = @_;
-    $req->authorization_basic($self->secret);
-    return $self->ua->request($req);
-}
-
-sub _check_res {
-    my ($res) = @_;
-    my ($url, $method) = ($res->request->uri, $res->request->method);
-    die sprintf "Error attempting %s => %s:\n%s\n%s",
-        $method, $url, $res->status_line, $res->content
-        unless $res->is_success;
-}
-
-around qw(_get _post) => sub {
-    my $orig = shift;
-    my $self = shift;
-    my $path = shift;
-    my $url = $self->_url($path);
-    my $res = $self->$orig($url, @_);
-    _check_res($res);
-    return from_json($res->content);
-};
 
 # ABSTRACT: BalancedPayments API bindings
 
