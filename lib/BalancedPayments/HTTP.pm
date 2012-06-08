@@ -11,25 +11,13 @@ has ua => (
     is => 'ro',
     lazy => 1,
     default => sub {
-        my $ua = LWP::UserAgent->new;
+        my $ua = LWP::UserAgent->new();
         $ua->timeout(10);
         return $ua;
     },
 );
 
 sub _url { $_[0]->base_url . $_[1] }
-
-sub _build_merchant {
-    my ($self) = @_;
-    my $data = $self->_get($self->merchants_uri);
-    return $data->{items}[0];
-}
-
-sub _build_marketplace {
-    my ($self) = @_;
-    my $data = $self->_get($self->marketplaces_uri);
-    return $data->{items}[0];
-}
 
 sub _get {
     my ($self, $path) = @_;
