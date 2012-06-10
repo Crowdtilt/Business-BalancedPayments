@@ -39,6 +39,7 @@ around qw(get post put) => sub {
     my $orig = shift;
     my $self = shift;
     my $path = shift;
+    die 'Path is missing' unless $path;
     my $url = $self->_url($path);
     return $self->$orig($url, @_);
 };

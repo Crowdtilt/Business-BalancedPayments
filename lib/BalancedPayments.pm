@@ -80,7 +80,7 @@ sub create_hold {
     my $holds_uri = $data->{holds_uri} || $data->{account}{holds_uri}
         or die 'No holds_uri found';
     if ($data->{card_type} and $data->{uri}) { # If a card is provided
-        $hold->{card_uri} = $data->{uri}
+        $hold->{source_uri} = $data->{uri}
     }
     return $self->post($holds_uri, $hold);
 }
@@ -238,9 +238,6 @@ You can pass in a card if you want to charge a specific card:
 
     my $card = bp->get_card($card_id);
     create_hold ({ amount => 200 }, $card)
-
-B<NOTE:> Passing in a card currently does not work.
-The api still charges the most recently added card for some reason.
 
 Returns a hold hashref.
 Example response:
