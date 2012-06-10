@@ -72,12 +72,17 @@ sub add_card {
 }
 
 sub create_hold {
-    my ($self, $hold, $account) = @_;
+    my ($self, $hold, $data) = @_;
     croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
     croak 'The hold is missing an amount field' unless $hold->{amount};
-    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
-    croak 'The account requires a holds_uri field' unless $account->{holds_uri};
-    return $self->_post($account->{holds_uri}, $hold);
+    croak 'The account or card param must be a hashref'
+        unless ref $data eq 'HASH';
+    my $holds_uri = $data->{holds_uri} || $data->{account}{holds_uri}
+        or die 'No holds_uri found';
+    if ($data->{card_type} and $data->{uri}) { # If a card is provided
+        $hold->{card_uri} = $data->{uri}
+    }
+    return $self->_post($holds_uri, $hold);
 }
 
 sub create_debit {
@@ -190,10 +195,10 @@ The account hashref must provide an email_address field.
 It is possible to create an account and associate it with a credit card at the
 same time.
 You can do this in 2 ways.
-If you have a card hashref, such as one returned by calling L</get_card>,
-then you can:
+You can provide a card such as one returned by calling L</get_card>:
 
-    create_account({ email_address => 'bob@crowdtilt.com' }, $card)
+    my $card = $bp->get_card($card_id);
+    create_account({ email_address => 'bob@crowdtilt.com' }, $card);
 
 Alternatively, you can provide a card_uri inside the C<$account> hashref:
 
@@ -219,15 +224,23 @@ See L</get_account> for an example response.
 =head2 create_hold
 
     create_hold ({ amount => 200 }, $account)
+    create_hold ({ amount => 200 }, $card)
 
 Creates a hold for the given account.
 It expects a hold hashref which at least contains an amount field.
 The amount must be an integer value >= 200.
-Balanced defaults to charging the most recently added card.
-You can pass through a specific card along with the amount if you want to
-charge a specific card.
-An account hashref, such as one returned by L</get_account>, is also required.
-The account hashref must at least contain contain a holds_uri field.
+
+An account or card must be provided.
+If an account is provided, Balanced defaults to charging the most recently
+added card for the account.
+
+You can pass in a card if you want to charge a specific card:
+
+    my $card = bp->get_card($card_id);
+    create_hold ({ amount => 200 }, $card)
+
+B<NOTE:> Passing in a card currently does not work.
+The api still charges the most recently added card for some reason.
 
 Returns a hold hashref.
 Example response:
@@ -265,7 +278,6 @@ Example response:
 Creates a debit for the given account.
 It expects a debit hashref which at least contains an amount field.
 An account hashref, such as one returned by L</get_account>, is also required.
-The account hashref must at least contain contain a debits_uri field.
 
 Returns a debit hashref.
 Example response.
