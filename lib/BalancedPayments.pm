@@ -51,7 +51,8 @@ sub get_account {
 }
 
 sub create_account {
-    my ($self, $account, $card) = @_;
+    my ($self, $account, %args) = @_;
+    my $card = $args{card};
     croak 'The account param must be a hashref' unless ref $account eq 'HASH';
     croak 'The account requires an email_address field'
         unless $account->{email_address};
@@ -64,7 +65,8 @@ sub create_account {
 }
 
 sub add_card {
-    my ($self, $card, $account) = @_;
+    my ($self, $card, %args) = @_;
+    my $account = $args{account};
     croak 'The card param must be a hashref' unless ref $card eq 'HASH';
     croak 'The account param must be a hashref' unless ref $account eq 'HASH';
     croak 'The account requires a cards_uri field' unless $account->{cards_uri};
@@ -72,21 +74,30 @@ sub add_card {
 }
 
 sub create_hold {
-    my ($self, $hold, $data) = @_;
+    my ($self, $hold, %args) = @_;
     croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
     croak 'The hold is missing an amount field' unless $hold->{amount};
-    croak 'The account or card param must be a hashref'
-        unless ref $data eq 'HASH';
-    my $holds_uri = $data->{holds_uri} || $data->{account}{holds_uri}
-        or die 'No holds_uri found';
-    if ($data->{card_type} and $data->{uri}) { # If a card is provided
-        $hold->{source_uri} = $data->{uri}
+    my $card = $args{card};
+    my $account = $args{account};
+    croak 'An account or card must be provided' unless $account or $card;
+    my $holds_uri;
+    if ($account) {
+        croak 'The account must be a hashref' unless ref $account eq 'HASH';
+        $holds_uri = $account->{holds_uri};
     }
+    if ($card) {
+        croak 'The card param must be a hashref' unless ref $card eq 'HASH';
+        croak 'The card is missing a uri' unless $card->{uri};
+        $holds_uri ||= $card->{account}{holds_uri};
+    }
+    croak 'No holds_uri found' unless $holds_uri;
+    $hold->{source_uri} = $card->{uri} if $card;
     return $self->post($holds_uri, $hold);
 }
 
 sub create_debit {
-    my ($self, $debit, $account) = @_;
+    my ($self, $debit, %args) = @_;
+    my $account = $args{account};
     croak 'The debit param must be a hashref' unless ref $debit eq 'HASH';
     croak 'The debit is missing an amount field' unless $debit->{amount};
     croak 'The account param must be a hashref' unless ref $account eq 'HASH';
@@ -181,38 +192,37 @@ Example response:
 
 =head2 create_account
 
-    create_account({ email_address => 'bob@crowdtilt.com' })
-    create_account({ email_address => 'bob@crowdtilt.com' }, $card)
-    create_account({
-        email_address => 'bob@crowdtilt.com',
-        card_uri => "/v1/marketplaces/MK98/cards/CC92QRQcwUCp5zpzEz7lXKS",
-    })
+    create_account($account)
+    create_account($account, card => $card)
 
 Creates an account.
-An account hashref is required and an optional card hashref may be provided as
-well.
-The account hashref must provide an email_address field.
+An account hashref is required.
+The account hashref must have an email_address field:
+
+    $bp->create_account({ email_address => 'bob@crowdtilt.com' });
+
 It is possible to create an account and associate it with a credit card at the
 same time.
 You can do this in 2 ways.
 You can provide a card such as one returned by calling L</get_card>:
 
     my $card = $bp->get_card($card_id);
-    create_account({ email_address => 'bob@crowdtilt.com' }, $card);
+    $bp->create_account({ email_address => 'bob@crowdtilt.com' }, card => $card)
 
-Alternatively, you can provide a card_uri inside the C<$account> hashref:
+Alternatively, you can provide a card_uri inside the account hashref:
 
+    my $card = $bp->get_card($card_id);
     $bp->create_account({
         email_address => 'bob@crowdtilt.com',
         card_uri      => $card->{uri},
-    })
+    });
 
 Returns an account hashref.
 See L</get_account> for an example response.
 
 =head2 add_card
 
-    add_card($card, $account)
+    add_card($card, account => $account)
 
 Adds a card to an account.
 It expects a card hashref, such as one returned by L</get_card>,
@@ -223,8 +233,8 @@ See L</get_account> for an example response.
 
 =head2 create_hold
 
-    create_hold ({ amount => 200 }, $account)
-    create_hold ({ amount => 200 }, $card)
+    create_hold($hold, account => $account)
+    create_hold($hold, card => $card)
 
 Creates a hold for the given account.
 It expects a hold hashref which at least contains an amount field.
@@ -234,10 +244,13 @@ An account or card must be provided.
 If an account is provided, Balanced defaults to charging the most recently
 added card for the account.
 
+    my $account = $bp->get_account($account_id);
+    $bp->create_hold ({ account => 250 }, account => $account);
+
 You can pass in a card if you want to charge a specific card:
 
     my $card = bp->get_card($card_id);
-    create_hold ({ amount => 200 }, $card)
+    $bp->create_hold({ amount => 250 }, card => $card);
 
 Returns a hold hashref.
 Example response:
@@ -270,11 +283,14 @@ Example response:
 
 =head2 create_debit
 
-    create_debit ({ amount => 200 }, $account)
+    create_debit($debit, account => $account)
 
 Creates a debit for the given account.
 It expects a debit hashref which at least contains an amount field.
 An account hashref, such as one returned by L</get_account>, is also required.
+
+    my $account = $bp->get_account($account_id);
+    $bp->create_hold ({ account => 250 }, account => $account);
 
 Returns a debit hashref.
 Example response.
