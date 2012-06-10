@@ -24,30 +24,30 @@ has accounts_uri => (
 
 sub _build_merchant {
     my ($self) = @_;
-    my $data = $self->_get($self->merchants_uri);
+    my $data = $self->get($self->merchants_uri);
     return $data->{items}[0];
 }
 
 sub _build_marketplace {
     my ($self) = @_;
-    my $data = $self->_get($self->marketplaces_uri);
+    my $data = $self->get($self->marketplaces_uri);
     return $data->{items}[0];
 }
 
 sub get_card {
     my ($self, $id) = @_;
-    return $self->_get($self->cards_uri . "/$id");
+    return $self->get($self->cards_uri . "/$id");
 }
 
 sub create_card {
     my ($self, $card) = @_;
     croak 'The card param must be a hashref' unless ref $card eq 'HASH';
-    return $self->_post($self->cards_uri, $card);
+    return $self->post($self->cards_uri, $card);
 }
 
 sub get_account {
     my ($self, $id) = @_;
-    return $self->_get($self->accounts_uri . "/$id");
+    return $self->get($self->accounts_uri . "/$id");
 }
 
 sub create_account {
@@ -60,7 +60,7 @@ sub create_account {
         croak 'The card is missing a uri' unless $card->{uri};
         $account->{card_uri} = $card->{uri};
     }
-    return $self->_post($self->accounts_uri, $account);
+    return $self->post($self->accounts_uri, $account);
 }
 
 sub add_card {
@@ -68,7 +68,7 @@ sub add_card {
     croak 'The card param must be a hashref' unless ref $card eq 'HASH';
     croak 'The account param must be a hashref' unless ref $account eq 'HASH';
     croak 'The account requires a cards_uri field' unless $account->{cards_uri};
-    return $self->_post($account->{cards_uri}, $card);
+    return $self->post($account->{cards_uri}, $card);
 }
 
 sub create_hold {
@@ -82,7 +82,7 @@ sub create_hold {
     if ($data->{card_type} and $data->{uri}) { # If a card is provided
         $hold->{card_uri} = $data->{uri}
     }
-    return $self->_post($holds_uri, $hold);
+    return $self->post($holds_uri, $hold);
 }
 
 sub create_debit {
@@ -92,7 +92,7 @@ sub create_debit {
     croak 'The account param must be a hashref' unless ref $account eq 'HASH';
     croak 'The account requires a debits_uri field'
         unless $account->{debits_uri};
-    return $self->_post($account->{debits_uri}, $debit);
+    return $self->post($account->{debits_uri}, $debit);
 }
 
 # ABSTRACT: BalancedPayments API bindings

@@ -19,28 +19,42 @@ has ua => (
     },
 );
 
-sub _url { $_[0]->base_url . $_[1] }
-
-sub _get {
+sub get {
     my ($self, $path) = @_;
     return $self->_req(GET $path);
 }
 
-sub _post {
+sub post {
     my ($self, $path, $params) = @_;
     return $self->_req(POST $path, content => to_json $params);
 }
 
-sub _put {
+sub put {
     my ($self, $path, $params) = @_;
     return $self->_req(PUT $path, content => to_json $params);
 }
+
+# Prefix the path param of the http methods with the base_url
+around qw(get post put) => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $path = shift;
+    my $url = $self->_url($path);
+    return $self->$orig($url, @_);
+};
 
 sub _req {
     my ($self, $req) = @_;
     $req->authorization_basic($self->secret);
     $req->header(content_type => 'application/json');
-    return $self->ua->request($req);
+    my $res = $self->ua->request($req);
+    _check_res($res);
+    return $res->content ? from_json($res->content) : 1;
+}
+
+sub _url {
+    my ($self, $path) = @_;
+    return $path =~ /^http/ ? $path : $self->base_url . $path;
 }
 
 sub _check_res {
@@ -50,15 +64,5 @@ sub _check_res {
         $method, $url, $res->status_line, $res->content
         unless $res->is_success;
 }
-
-around qw(_get _post _put) => sub {
-    my $orig = shift;
-    my $self = shift;
-    my $path = shift;
-    my $url = $self->_url($path);
-    my $res = $self->$orig($url, @_);
-    _check_res($res);
-    return $res->content ? from_json($res->content) : 1;
-};
 
 1;
