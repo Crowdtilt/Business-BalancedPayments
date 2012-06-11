@@ -21,6 +21,16 @@ has accounts_uri => (
     lazy    => 1,
     default => sub { shift->marketplace->{accounts_uri} }
 );
+has debits_uri => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { shift->marketplace->{debits_uri} }
+);
+has holds_uri => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { shift->marketplace->{holds_uri} }
+);
 
 sub _build_merchant {
     my ($self) = @_;
@@ -95,15 +105,16 @@ sub create_hold {
     return $self->post($holds_uri, $hold);
 }
 
-sub create_debit {
-    my ($self, $debit, %args) = @_;
-    my $account = $args{account};
-    croak 'The debit param must be a hashref' unless ref $debit eq 'HASH';
-    croak 'The debit is missing an amount field' unless $debit->{amount};
-    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
-    croak 'The account requires a debits_uri field'
-        unless $account->{debits_uri};
-    return $self->post($account->{debits_uri}, $debit);
+sub capture_hold {
+    my ($self, $hold) = @_;
+    croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
+    croak 'No hold uri found' unless $hold->{uri};
+    return $self->post($self->debits_uri, { hold_uri => $hold->{uri} });
+}
+
+sub get_hold {
+    my ($self, $id) = @_;
+    return $self->get($self->holds_uri . "/$id");
 }
 
 # ABSTRACT: BalancedPayments API bindings
@@ -231,28 +242,11 @@ and an account hashref, such as one returned by L</get_account>.
 Returns an account hashref.
 See L</get_account> for an example response.
 
-=head2 create_hold
+=head2 get_hold
 
-    create_hold($hold, account => $account)
-    create_hold($hold, card => $card)
+    get_hold($hold_id)
 
-Creates a hold for the given account.
-It expects a hold hashref which at least contains an amount field.
-The amount must be an integer value >= 200.
-
-An account or card must be provided.
-If an account is provided, Balanced defaults to charging the most recently
-added card for the account.
-
-    my $account = $bp->get_account($account_id);
-    $bp->create_hold ({ account => 250 }, account => $account);
-
-You can pass in a card if you want to charge a specific card:
-
-    my $card = bp->get_card($card_id);
-    $bp->create_hold({ amount => 250 }, card => $card);
-
-Returns a hold hashref.
+Returns the hold with the given id.
 Example response:
 
  {
@@ -281,32 +275,52 @@ Example response:
    },
  }
 
-=head2 create_debit
+=head2 create_hold
 
-    create_debit($debit, account => $account)
+    create_hold($hold, account => $account)
+    create_hold($hold, card => $card)
 
-Creates a debit for the given account.
-It expects a debit hashref which at least contains an amount field.
-An account hashref, such as one returned by L</get_account>, is also required.
+Creates a hold for the given account.
+It expects a hold hashref which at least contains an amount field.
+The amount must be an integer value >= 200.
+
+An account or card must be provided.
+If an account is provided, Balanced defaults to charging the most recently
+added card for the account.
 
     my $account = $bp->get_account($account_id);
     $bp->create_hold ({ account => 250 }, account => $account);
 
-Returns a debit hashref.
-Example response.
+You can pass in a card if you want to charge a specific card:
+
+    my $card = bp->get_card($card_id);
+    $bp->create_hold({ amount => 250 }, card => $card);
+
+See L</get_hold> for an example response.
+
+=head2 capture_hold
+
+    capture_hold($hold)
+
+Capturing a hold will create a debit representing the flow of funds from the
+buyer's account to your marketplace.
+
+    $bp->capture_hold($hold);
+
+Example response:
 
  {
    id                       =>  "WD2Lpzyz8Okbhx2Nbw7YuTP3",
    uri                      =>  "/v1/marketplaces/MK98/debits/WD2L",
-   account                  =>  { ... },
    amount                   =>  50,
    appears_on_statement_as  =>  "example.com",
    available_at             =>  "2012-06-08T09:57:27.686977Z",
    created_at               =>  "2012-06-08T09:57:27.750828Z",
    description              =>  undef,
    fee                      =>  1,
-   hold                     =>  { ... },
    meta                     =>  {},
+   hold                     =>  { ... },
+   account                  =>  { ... },
    refunds_uri              =>  "/v1/marketplaces/MK98/debits/WD2L/refunds",
    source => {
      brand            => "MasterCard",
