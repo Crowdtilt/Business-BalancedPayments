@@ -122,6 +122,13 @@ sub get_hold {
     return $self->get($self->holds_uri . "/$id");
 }
 
+sub void_hold {
+    my ($self, $hold) = @_;
+    croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
+    croak 'No hold uri found' unless $hold->{uri};
+    return $self->put($hold->{uri}, { is_void => 'True' });
+}
+
 sub refund_debit {
     my ($self, $debit) = @_;
     croak 'The debit param must be a hashref' unless ref $debit eq 'HASH';
@@ -352,6 +359,18 @@ Example response:
    },
    transaction_number => "W476-365-3767",
  }
+
+=head2 void_hold
+
+    void_hold($hold)
+
+Voids a hold.
+
+    my $hold = $bp->get_hold($hold_id);
+    $bp->void_hold($hold);
+
+Returns a hold hashref.
+See L</get_hold> for an example response.
 
 =head2 refund_debit
 
