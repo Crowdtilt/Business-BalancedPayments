@@ -11,15 +11,15 @@ has marketplace => (is => 'rw', lazy => 1, builder => '_build_marketplace');
 has api_keys_uri     => (is => 'ro', default => sub { '/v1/api_keys'     });
 has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants'    });
 has marketplaces_uri => (is => 'ro', default => sub { '/v1/marketplaces' });
-has cards_uri => (
-    is      => 'ro',
-    lazy    => 1,
-    default => sub { shift->marketplace->{cards_uri} }
-);
 has accounts_uri => (
     is      => 'ro',
     lazy    => 1,
     default => sub { shift->marketplace->{accounts_uri} }
+);
+has cards_uri => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { shift->marketplace->{cards_uri} }
 );
 has debits_uri => (
     is      => 'ro',
@@ -30,6 +30,11 @@ has holds_uri => (
     is      => 'ro',
     lazy    => 1,
     default => sub { shift->marketplace->{holds_uri} }
+);
+has refunds_uri => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { shift->marketplace->{refunds_uri} }
 );
 
 sub _build_merchant {
@@ -115,6 +120,15 @@ sub capture_hold {
 sub get_hold {
     my ($self, $id) = @_;
     return $self->get($self->holds_uri . "/$id");
+}
+
+sub refund_debit {
+    my ($self, $debit) = @_;
+    croak 'The debit param must be a hashref' unless ref $debit eq 'HASH';
+    croak 'No amount found' unless $debit->{amount};
+    croak 'No debit uri found' unless $debit->{uri} || $debit->{debit_uri};
+    $debit->{debit_uri} ||= $debit->{uri};
+    return $self->post($self->refunds_uri, $debit);
 }
 
 # ABSTRACT: BalancedPayments API bindings
@@ -305,23 +319,25 @@ See L</get_hold> for an example response.
 Capturing a hold will create a debit representing the flow of funds from the
 buyer's account to your marketplace.
 
+    my $hold = $bp->get_hold($hold_id);
     $bp->capture_hold($hold);
 
+Returns a debit hashref.
 Example response:
 
  {
-   id                       =>  "WD2Lpzyz8Okbhx2Nbw7YuTP3",
-   uri                      =>  "/v1/marketplaces/MK98/debits/WD2L",
-   amount                   =>  50,
-   appears_on_statement_as  =>  "example.com",
-   available_at             =>  "2012-06-08T09:57:27.686977Z",
-   created_at               =>  "2012-06-08T09:57:27.750828Z",
-   description              =>  undef,
-   fee                      =>  1,
-   meta                     =>  {},
-   hold                     =>  { ... },
-   account                  =>  { ... },
-   refunds_uri              =>  "/v1/marketplaces/MK98/debits/WD2L/refunds",
+   id                      => "WD2Lpzyz8Okbhx2Nbw7YuTP3",
+   uri                     => "/v1/marketplaces/MK98/debits/WD2L",
+   amount                  => 50,
+   appears_on_statement_as => "example.com",
+   available_at            => "2012-06-08T09:57:27.686977Z",
+   created_at              => "2012-06-08T09:57:27.750828Z",
+   description             => undef,
+   fee                     => 1,
+   meta                    => {},
+   hold                    => { ... },
+   account                 => { ... },
+   refunds_uri             => "/v1/marketplaces/MK98/debits/WD2L/refunds",
    source => {
      brand            => "MasterCard",
      card_type        => "mastercard",
@@ -337,6 +353,35 @@ Example response:
    transaction_number => "W476-365-3767",
  }
 
+=head2 refund_debit
+
+    refund_debit($debit)
+
+Refunds a debit.
+If no amount is found in the debit hashref,
+then Balanced refunds the entire amount.
+
+    my $account = $bp->get_account($account_id);
+    my $debit = $bp->capture_hold(
+        $bp->create_hold({ amount => 305 }, account => $account)
+    );
+    $bp->refund_debit($debit);
+
+Example response:
+
+    {
+        id                      => "RFrFB30adjtze8HSIoghLPr",
+        uri                     => "/v1/marketplaces/MK98/refunds/RFrFB30adLPr",
+        amount                  => 305,
+        created_at              => "2012-06-11T11:31:59.414827Z",
+        description             => undef,
+        fee                     => -10,
+        meta                    => {},
+        transaction_number      => "RF536-609-0270",
+        appears_on_statement_as => "example.com",
+        account                 => { ... },
+        debit                   => { ... },
+    }
 =cut
 
 1;
