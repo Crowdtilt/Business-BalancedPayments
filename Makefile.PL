@@ -1,10 +1,24 @@
+
 use strict;
 use warnings;
+
+
+
 use ExtUtils::MakeMaker 6.30;
+
+
+
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "BalancedPayments Perl Module",
-  "AUTHOR" => "Khaled Hussein <khaled.hussein\@gmail.com>",
-  "BUILD_REQUIRES" => {},
+  "ABSTRACT" => "BalancedPayments API bindings",
+  "AUTHOR" => "Naveed Massjouni <naveedm9\@gmail.com>, Khaled Hussein <khaled.hussein\@gmail.com>",
+  "BUILD_REQUIRES" => {
+    "File::Find" => 0,
+    "File::Temp" => 0,
+    "Test::More" => 0,
+    "Test::Most" => 0,
+    "strict" => 0,
+    "warnings" => 0
+  },
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.30"
   },
@@ -12,10 +26,17 @@ my %WriteMakefileArgs = (
   "EXE_FILES" => [],
   "LICENSE" => "perl",
   "NAME" => "BalancedPayments",
-  "PREREQ_PM" => {},
-  "VERSION" => "0.001",
+  "PREREQ_PM" => {
+    "Carp" => 0,
+    "HTTP::Request::Common" => 0,
+    "JSON" => 0,
+    "LWP::UserAgent" => 0,
+    "Moo" => 0,
+    "Moo::Role" => 0
+  },
+  "VERSION" => "0.0001",
   "test" => {
-    "TESTS" => ""
+    "TESTS" => "t/*.t"
   }
 );
 
@@ -37,3 +58,6 @@ delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
   unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
 
 WriteMakefile(%WriteMakefileArgs);
+
+
+
