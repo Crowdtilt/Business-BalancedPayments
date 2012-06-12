@@ -11,31 +11,6 @@ has marketplace => (is => 'rw', lazy => 1, builder => '_build_marketplace');
 has api_keys_uri     => (is => 'ro', default => sub { '/v1/api_keys'     });
 has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants'    });
 has marketplaces_uri => (is => 'ro', default => sub { '/v1/marketplaces' });
-has accounts_uri => (
-    is      => 'ro',
-    lazy    => 1,
-    default => sub { shift->marketplace->{accounts_uri} }
-);
-has cards_uri => (
-    is      => 'ro',
-    lazy    => 1,
-    default => sub { shift->marketplace->{cards_uri} }
-);
-has debits_uri => (
-    is      => 'ro',
-    lazy    => 1,
-    default => sub { shift->marketplace->{debits_uri} }
-);
-has holds_uri => (
-    is      => 'ro',
-    lazy    => 1,
-    default => sub { shift->marketplace->{holds_uri} }
-);
-has refunds_uri => (
-    is      => 'ro',
-    lazy    => 1,
-    default => sub { shift->marketplace->{refunds_uri} }
-);
 
 sub _build_merchant {
     my ($self) = @_;
@@ -52,19 +27,19 @@ sub _build_marketplace {
 sub get_card {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
-    return $self->get($self->cards_uri . "/$id");
+    return $self->get($self->marketplace->{cards_uri} . "/$id");
 }
 
 sub create_card {
     my ($self, $card) = @_;
     croak 'The card param must be a hashref' unless ref $card eq 'HASH';
-    return $self->post($self->cards_uri, $card);
+    return $self->post($self->marketplace->{cards_uri}, $card);
 }
 
 sub get_account {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
-    return $self->get($self->accounts_uri . "/$id");
+    return $self->get($self->marketplace->{accounts_uri} . "/$id");
 }
 
 sub create_account {
@@ -78,7 +53,7 @@ sub create_account {
         croak 'The card is missing a uri' unless $card->{uri};
         $account->{card_uri} = $card->{uri};
     }
-    return $self->post($self->accounts_uri, $account);
+    return $self->post($self->marketplace->{accounts_uri}, $account);
 }
 
 sub add_card {
@@ -116,13 +91,14 @@ sub capture_hold {
     my ($self, $hold) = @_;
     croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
     croak 'No hold uri found' unless $hold->{uri};
-    return $self->post($self->debits_uri, { hold_uri => $hold->{uri} });
+    return $self->post(
+        $self->marketplace->{debits_uri}, { hold_uri => $hold->{uri} });
 }
 
 sub get_hold {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
-    return $self->get($self->holds_uri . "/$id");
+    return $self->get($self->marketplace->{holds_uri} . "/$id");
 }
 
 sub void_hold {
@@ -138,7 +114,7 @@ sub refund_debit {
     croak 'No amount found' unless $debit->{amount};
     croak 'No debit uri found' unless $debit->{uri} || $debit->{debit_uri};
     $debit->{debit_uri} ||= $debit->{uri};
-    return $self->post($self->refunds_uri, $debit);
+    return $self->post($self->marketplace->{refunds_uri}, $debit);
 }
 
 sub get_bank_account {
