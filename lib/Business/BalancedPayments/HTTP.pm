@@ -1,4 +1,4 @@
-package BalancedPayments::HTTP;
+package Business::BalancedPayments::HTTP;
 use Moo::Role;
 
 use HTTP::Request::Common qw(GET POST PUT);

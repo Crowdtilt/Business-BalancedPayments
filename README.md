@@ -1,6 +1,6 @@
 # NAME
 
-BalancedPayments - BalancedPayments API bindings
+Business::BalancedPayments - BalancedPayments API bindings
 
 # VERSION
 
@@ -8,10 +8,10 @@ version 0.0001
 
 # SYNOPSIS
 
-    use BalancedPayments;
+    use Business::BalancedPayments;
 
     my $secret = 'abc123';
-    my $bp = BalancedPayments->new(secret => $secret);
+    my $bp = Business::BalancedPayments->new(secret => $secret);
 
     my $card = $bp->create_card({
         card_number      => "5105105105105100",
