@@ -138,6 +138,12 @@ sub refund_debit {
     return $self->post($self->refunds_uri, $debit);
 }
 
+sub get_bank_account {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->marketplace->{bank_accounts_uri} . "/$id");
+}
+
 sub create_bank_account {
     my ($self, $bank_account) = @_;
     croak 'The bank_account must be a hashref'
@@ -174,7 +180,7 @@ L<BalancedPayments|https://www.balancedpayments.com> API.
 
     get_card($id)
 
-Returns a credit card for the given id.
+Returns the credit card for the given id.
 
 Example response:
 
@@ -201,14 +207,14 @@ Example response:
         security_code    => 123,
     })
 
-Creates a credit card and returns the server's representation of it.
+Creates a credit card.
 See L</get_card> for an example response.
 
 =head2 get_account
 
     get_account($id)
 
-Returns an account for the given id.
+Returns the account for the given id.
 
 Example response:
 
@@ -408,6 +414,42 @@ Example response:
         account                 => { ... },
         debit                   => { ... },
     }
+
+=head2 get_bank_account
+
+    get_bank_account($id)
+
+Returns the bank account for the given id.
+
+Example response:
+
+    {
+        id          =>  "BA3gESxjg9yO61fj3CVUhGQm",
+        uri         =>  "/v1/marketplaces/MK98/bank_accounts/BA3gES",
+        name        =>  "WHC III Checking",
+        bank_name   =>  "SAN MATEO CREDIT UNION",
+        bank_code   =>  321174851,
+        last_four   =>  1234,
+        created_at  =>  "2012-06-12T15:00:59.248638Z",
+        is_valid    =>  1,
+        account     =>  { ... },
+    }
+
+=head2 create_bank_account
+
+    create_bank_account($bank_account)
+
+Creates a bank account.
+A bank account hashref is required:
+
+    $bp->create_bank_account({
+        name           => "WHC III Checking",
+        account_number => "12341234",
+        bank_code      => "321174851",
+    });
+
+See L</get_bank_account> for an example response.
+
 =cut
 
 1;
