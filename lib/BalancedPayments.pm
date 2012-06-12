@@ -138,6 +138,13 @@ sub refund_debit {
     return $self->post($self->refunds_uri, $debit);
 }
 
+sub create_bank_account {
+    my ($self, $bank_account) = @_;
+    croak 'The bank_account must be a hashref'
+        unless ref $bank_account eq 'HASH';
+    return $self->post($self->marketplace->{bank_accounts_uri}, $bank_account);
+}
+
 # ABSTRACT: BalancedPayments API bindings
 
 =head1 SYNOPSIS
