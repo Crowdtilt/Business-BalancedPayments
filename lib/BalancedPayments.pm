@@ -157,11 +157,28 @@ sub create_bank_account {
 sub create_credit {
     my ($self, $credit, %args) = @_;
     my $account = $args{account};
+    my $bank_account = $args{bank_account};
     croak 'The credit param must be a hashref' unless ref $credit eq 'HASH';
     croak 'The credit must contain an amount' unless exists $credit->{amount};
-    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
-    croak 'The account is missing credits_uri' unless $account->{credits_uri};
-    return $self->post($account->{credits_uri}, $credit);
+    croak 'An account or bank_account params is required'
+        unless $account or $bank_account;
+    my $credits_uri;
+    if ($account) {
+        croak 'The account param must be a hashref'
+            unless ref $account eq 'HASH';
+        $credits_uri = $account->{credits_uri};
+    }
+    if ($bank_account) {
+        croak 'The bank_account param must be a hashref'
+            unless ref $bank_account eq 'HASH';
+        croak 'The bank_account is a uri' unless$bank_account->{uri};
+        croak 'The bank_account is missing an credits_uri'
+            unless$bank_account->{account}{credits_uri};
+        $credits_uri = $bank_account->{account}{credits_uri};
+        $credit->{bank_account_uri} = $bank_account->{uri};
+    }
+    croak 'No credits_uri found' unless $credits_uri;
+    return $self->post($credits_uri, $credit);
 }
 
 # ABSTRACT: BalancedPayments API bindings
@@ -466,17 +483,24 @@ See L</get_bank_account> for an example response.
 =head2 create_credit
 
     create_credit($credit, account => $account)
+    create_credit($credit, bank_account => $bank_account)
 
-Creates a credit for the given account.
+Creates a credit.
+This is a way of sending money to merchant accounts.
 The credit hashref should at least contain an amount field.
+An account or bank account hashref is required.
+You may pass in a bank account if you would like to specify a specific bank
+account to send money to.
+
+    my $bank_account = $bp->get_bank_account($bank_account_id);
+    $bp->create_credit({ amount => 50 }, bank_account => $bank_account);
+
+If an account is provided, Balanced will default to crediting the most recently
+added bank account.
 The account should have the merchant role.
 
-    my $account = $bp->get_account($merchant_account_id);
+    my $account = $bp->get_account($account_id);
     $bp->create_credit({ amount => 50 }, account => $account);
-
-You may pass through a bank_account_uri if you would like to specify a specific
-account to pay to.
-If not specified, Balanced will default to the most recently added bank account.
 
 Returnds a credit hashref.
 Example response:
