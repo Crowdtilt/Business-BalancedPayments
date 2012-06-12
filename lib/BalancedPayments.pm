@@ -51,6 +51,7 @@ sub _build_marketplace {
 
 sub get_card {
     my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
     return $self->get($self->cards_uri . "/$id");
 }
 
@@ -62,6 +63,7 @@ sub create_card {
 
 sub get_account {
     my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
     return $self->get($self->accounts_uri . "/$id");
 }
 
@@ -119,6 +121,7 @@ sub capture_hold {
 
 sub get_hold {
     my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
     return $self->get($self->holds_uri . "/$id");
 }
 
@@ -149,6 +152,16 @@ sub create_bank_account {
     croak 'The bank_account must be a hashref'
         unless ref $bank_account eq 'HASH';
     return $self->post($self->marketplace->{bank_accounts_uri}, $bank_account);
+}
+
+sub create_credit {
+    my ($self, $credit, %args) = @_;
+    my $account = $args{account};
+    croak 'The credit param must be a hashref' unless ref $credit eq 'HASH';
+    croak 'The credit must contain an amount' unless exists $credit->{amount};
+    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
+    croak 'The account is missing credits_uri' unless $account->{credits_uri};
+    return $self->post($account->{credits_uri}, $credit);
 }
 
 # ABSTRACT: BalancedPayments API bindings
@@ -449,6 +462,45 @@ A bank account hashref is required:
     });
 
 See L</get_bank_account> for an example response.
+
+=head2 create_credit
+
+    create_credit($credit, account => $account)
+
+Creates a credit for the given account.
+The credit hashref should at least contain an amount field.
+The account should have the merchant role.
+
+    my $account = $bp->get_account($merchant_account_id);
+    $bp->create_credit({ amount => 50 }, account => $account);
+
+You may pass through a bank_account_uri if you would like to specify a specific
+account to pay to.
+If not specified, Balanced will default to the most recently added bank account.
+
+Returnds a credit hashref.
+Example response:
+
+    {
+        id                  => "CR4GkfkOzYNBjFXW5Mxtpn1I",
+        uri                 => "/v1/marketplaces/MK98/credits/CR4Gkf",
+        amount              => 50,
+        created_at          => "2012-06-12T18:51:21.097085Z",
+        description         => undef,
+        meta                => {},
+        transaction_number  => "CR382-740-3389",
+        account             => { ... },
+        destination         => {
+            bank_code  => 321174851,
+            bank_name  => "SAN MATEO CREDIT UNION",
+            created_at => "2012-06-12T15:00:59.248638Z",
+            id         => "BA3gESxjg9yO61fj3CVUhGQm",
+            is_valid   => 1,
+            last_four  => 1234,
+            name       => "WHC III Checking",
+            uri => "/v1/marketplaces/MK98/accounts/AC78/bank_accounts/BA3g",
+        },
+    }
 
 =cut
 
