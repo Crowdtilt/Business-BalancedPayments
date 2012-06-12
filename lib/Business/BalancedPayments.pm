@@ -1,6 +1,6 @@
-package BalancedPayments;
+package Business::BalancedPayments;
 use Moo;
-with 'BalancedPayments::HTTP';
+with 'Business::BalancedPayments::HTTP';
 
 use Carp qw(croak);
 
@@ -161,10 +161,10 @@ sub create_credit {
 
 =head1 SYNOPSIS
 
-    use BalancedPayments;
+    use Business::BalancedPayments;
 
     my $secret = 'abc123';
-    my $bp = BalancedPayments->new(secret => $secret);
+    my $bp = Business::BalancedPayments->new(secret => $secret);
 
     my $card = $bp->create_card({
         card_number      => "5105105105105100",

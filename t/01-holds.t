@@ -1,7 +1,7 @@
 use Test::Most;
-use BalancedPayments;
+use Business::BalancedPayments;
 
-my $bp = BalancedPayments->new(secret => 'secret');
+my $bp = Business::BalancedPayments->new(secret => 'secret');
 
 my $hold = {};
 throws_ok { $bp->create_hold($hold) } qr/amount/, 'No ammount';
