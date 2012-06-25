@@ -12,7 +12,6 @@ my %WriteMakefileArgs = (
   "ABSTRACT" => "BalancedPayments API bindings",
   "AUTHOR" => "Naveed Massjouni <naveedm9\@gmail.com>, Khaled Hussein <khaled.hussein\@gmail.com>",
   "BUILD_REQUIRES" => {
-    "BalancedPayments" => 0,
     "File::Find" => 0,
     "File::Temp" => 0,
     "Test::More" => 0,
