@@ -75,6 +75,17 @@ sub add_card {
     return $self->post($account->{cards_uri}, $card);
 }
 
+sub add_bank_account {
+    my ($self, $bank_account, %args) = @_;
+    my $account = $args{account};
+    croak 'The bank_account param must be a hashref'
+        unless ref $bank_account eq 'HASH';
+    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
+    croak 'The bank_accounts_uri field is missing from the account object'
+        unless $account->{bank_accounts_uri};
+    return $self->post($account->{bank_accounts_uri}, $bank_account);
+}
+
 sub create_hold {
     my ($self, $hold, %args) = @_;
     croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
@@ -250,6 +261,13 @@ Example response:
      refunds_uri       => "/v1/marketplaces/MK98/accounts/AC7A/refunds",
      transactions_uri  => "/v1/marketplaces/MK98/accounts/AC7A/transactions",
  }
+
+=head2 get_account_by_email
+
+    get_account_by_email($email)
+
+Returns the account for the given email address.
+See L</get_account> for an example response.
 
 =head2 create_account
 
@@ -440,7 +458,7 @@ Returns the bank account for the given id.
 Example response:
 
     {
-        id          =>  "BA3gESxjg9yO61fj3CVUhGQm",
+        id          =>  "BA3gES",
         uri         =>  "/v1/marketplaces/MK98/bank_accounts/BA3gES",
         name        =>  "WHC III Checking",
         bank_name   =>  "SAN MATEO CREDIT UNION",
@@ -464,6 +482,29 @@ A bank account hashref is required:
         bank_code      => "321174851",
     });
 
+See L</get_bank_account> for an example response.
+
+
+=head2 add_bank_account
+
+    add_bank_account($bank_account, account => $account)
+
+Adds a bank account to an account.
+It expects a bank account hashref and an account hashref:
+
+    my $account = $bp->get_account($account_id);
+    $bp->add_bank_accounti(
+        {
+            name           => "WHC III Checking",
+            account_number => "12341234",
+            bank_code      => "321174851",
+        },
+        account => $account
+    );
+
+This operation implicitly adds the "merchant" role to the account.
+
+Returns an bank_account hashref.
 See L</get_bank_account> for an example response.
 
 =head2 create_credit
