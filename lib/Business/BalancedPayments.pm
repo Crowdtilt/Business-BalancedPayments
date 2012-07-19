@@ -67,14 +67,8 @@ sub create_account {
 }
 
 sub update_account {
-    my ($self, $account, %args) = @_;
-    my $merchant = $args{merchant};
+    my ($self, $account) = @_;
     croak 'The account param must be a hashref' unless ref $account eq 'HASH';
-    my $existing_acct = $self->get_account($account->{id});
-    return $existing_acct if $existing_acct;
-    if ($merchant) {
-        croak 'The merchant param must be a hashref' unless ref $merchant eq 'HASH';
-    }
     return $self->put($account->{uri}, $account);
 }
 
