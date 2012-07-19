@@ -66,6 +66,12 @@ sub create_account {
     return $self->post($self->marketplace->{accounts_uri}, $account);
 }
 
+sub update_account {
+    my ($self, $account) = @_;
+    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
+    return $self->put($account->{uri}, $account);
+}
+
 sub add_card {
     my ($self, $card, %args) = @_;
     my $account = $args{account};
