@@ -60,10 +60,7 @@ sub _url {
 
 sub _check_res {
     my ($res) = @_;
-    my ($url, $method) = ($res->request->uri, $res->request->method);
-    die sprintf "Error attempting %s => %s:\n%s\n%s",
-        $method, $url, $res->status_line, $res->content
-        unless $res->is_success;
+    die $res unless $res->is_success;
 }
 
 1;
