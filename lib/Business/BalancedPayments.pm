@@ -305,6 +305,13 @@ Alternatively, you can provide a card_uri inside the account hashref:
 Returns an account hashref.
 See L</get_account> for an example response.
 
+=head2 update_account
+
+    update_account($account)
+
+Updates an account.
+it expects an account hashref, such as one returned by L</get_account>
+
 =head2 add_card
 
     add_card($card, account => $account)

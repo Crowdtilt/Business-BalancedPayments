@@ -29,7 +29,7 @@ This module provides bindings for the
 
 # METHODS
 
-## get_card
+## get\_card
 
     get_card($id)
 
@@ -51,7 +51,7 @@ Example response:
         uri              => "/v1/marketplaces/MK98f1/cards/CC92QRQcwUCp5zpzKS",
     }
 
-## create_card
+## create\_card
 
     create_card({
         card_number      => "5105105105105100",
@@ -61,9 +61,9 @@ Example response:
     })
 
 Creates a credit card.
-See ["get_card"](#get_card) for an example response.
+See ["get\_card"](#get\_card) for an example response.
 
-## get_account
+## get\_account
 
     get_account($id)
 
@@ -88,26 +88,33 @@ Example response:
         transactions_uri  => "/v1/marketplaces/MK98/accounts/AC7A/transactions",
     }
 
-## create_account
+## get\_account\_by\_email
+
+    get_account_by_email($email)
+
+Returns the account for the given email address.
+See ["get\_account"](#get\_account) for an example response.
+
+## create\_account
 
     create_account($account)
     create_account($account, card => $card)
 
 Creates an account.
 An account hashref is required.
-The account hashref must have an email_address field:
+The account hashref must have an email\_address field:
 
     $bp->create_account({ email_address => 'bob@crowdtilt.com' });
 
 It is possible to create an account and associate it with a credit card at the
 same time.
 You can do this in 2 ways.
-You can provide a card such as one returned by calling ["get_card"](#get_card):
+You can provide a card such as one returned by calling ["get\_card"](#get\_card):
 
     my $card = $bp->get_card($card_id);
     $bp->create_account({ email_address => 'bob@crowdtilt.com' }, card => $card)
 
-Alternatively, you can provide a card_uri inside the account hashref:
+Alternatively, you can provide a card\_uri inside the account hashref:
 
     my $card = $bp->get_card($card_id);
     $bp->create_account({
@@ -116,20 +123,27 @@ Alternatively, you can provide a card_uri inside the account hashref:
     });
 
 Returns an account hashref.
-See ["get_account"](#get_account) for an example response.
+See ["get\_account"](#get\_account) for an example response.
 
-## add_card
+## update\_account
+
+    update_account($account)
+
+Updates an account.
+it expects an account hashref, such as one returned by ["get\_account"](#get\_account)
+
+## add\_card
 
     add_card($card, account => $account)
 
 Adds a card to an account.
-It expects a card hashref, such as one returned by ["get_card"](#get_card),
-and an account hashref, such as one returned by ["get_account"](#get_account).
+It expects a card hashref, such as one returned by ["get\_card"](#get\_card),
+and an account hashref, such as one returned by ["get\_account"](#get\_account).
 
 Returns an account hashref.
-See ["get_account"](#get_account) for an example response.
+See ["get\_account"](#get\_account) for an example response.
 
-## get_hold
+## get\_hold
 
     get_hold($hold_id)
 
@@ -162,7 +176,7 @@ Example response:
       },
     }
 
-## create_hold
+## create\_hold
 
     create_hold($hold, account => $account)
     create_hold($hold, card => $card)
@@ -183,9 +197,9 @@ You can pass in a card if you want to charge a specific card:
     my $card = bp->get_card($card_id);
     $bp->create_hold({ amount => 250 }, card => $card);
 
-See ["get_hold"](#get_hold) for an example response.
+See ["get\_hold"](#get\_hold) for an example response.
 
-## capture_hold
+## capture\_hold
 
     capture_hold($hold)
 
@@ -226,7 +240,7 @@ Example response:
       transaction_number => "W476-365-3767",
     }
 
-## void_hold
+## void\_hold
 
     void_hold($hold)
 
@@ -236,9 +250,9 @@ Voids a hold.
     $bp->void_hold($hold);
 
 Returns a hold hashref.
-See ["get_hold"](#get_hold) for an example response.
+See ["get\_hold"](#get\_hold) for an example response.
 
-## refund_debit
+## refund\_debit
 
     refund_debit($debit)
 
@@ -268,7 +282,7 @@ Example response:
         debit                   => { ... },
     }
 
-## get_bank_account
+## get\_bank\_account
 
     get_bank_account($id)
 
@@ -277,7 +291,7 @@ Returns the bank account for the given id.
 Example response:
 
     {
-        id          =>  "BA3gESxjg9yO61fj3CVUhGQm",
+        id          =>  "BA3gES",
         uri         =>  "/v1/marketplaces/MK98/bank_accounts/BA3gES",
         name        =>  "WHC III Checking",
         bank_name   =>  "SAN MATEO CREDIT UNION",
@@ -288,7 +302,7 @@ Example response:
         account     =>  { ... },
     }
 
-## create_bank_account
+## create\_bank\_account
 
     create_bank_account($bank_account)
 
@@ -301,9 +315,31 @@ A bank account hashref is required:
         bank_code      => "321174851",
     });
 
-See ["get_bank_account"](#get_bank_account) for an example response.
+See ["get\_bank\_account"](#get\_bank\_account) for an example response.
 
-## create_credit
+## add\_bank\_account
+
+    add_bank_account($bank_account, account => $account)
+
+Adds a bank account to an account.
+It expects a bank account hashref and an account hashref:
+
+    my $account = $bp->get_account($account_id);
+    $bp->add_bank_accounti(
+        {
+            name           => "WHC III Checking",
+            account_number => "12341234",
+            bank_code      => "321174851",
+        },
+        account => $account
+    );
+
+This operation implicitly adds the "merchant" role to the account.
+
+Returns an bank\_account hashref.
+See ["get\_bank\_account"](#get\_bank\_account) for an example response.
+
+## create\_credit
 
     create_credit($credit, account => $account)
     create_credit($credit, bank_account => $bank_account)
