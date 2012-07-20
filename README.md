@@ -4,7 +4,7 @@ Business::BalancedPayments - BalancedPayments API bindings
 
 # VERSION
 
-version 0.0001
+version 0.0100
 
 # SYNOPSIS
 
@@ -130,7 +130,8 @@ See ["get\_account"](#get\_account) for an example response.
     update_account($account)
 
 Updates an account.
-it expects an account hashref, such as one returned by ["get\_account"](#get\_account)
+It expects an account hashref, such as one returned by ["get\_account"](#get\_account).
+The account hashref must contain a uri or id field.
 
 ## add\_card
 
@@ -315,6 +316,7 @@ A bank account hashref is required:
         bank_code      => "321174851",
     });
 
+Returns a bank account hashref.
 See ["get\_bank\_account"](#get\_bank\_account) for an example response.
 
 ## add\_bank\_account
@@ -336,7 +338,40 @@ It expects a bank account hashref and an account hashref:
 
 This operation implicitly adds the "merchant" role to the account.
 
-Returns an bank\_account hashref.
+Returns a bank account hashref.
+See ["get\_bank\_account"](#get\_bank\_account) for an example response.
+
+## update\_bank\_account
+
+    update_bank_account($bank_account)
+
+Updates a bank account.
+A bank account hashref must be provided which must contain an id or uri for
+the bank account.
+Balanced only allows you to update the is\_valid and meta fields.
+You may invalidate a bank account by passing is\_valid with a false value.
+Once a bank account has been invalidated it cannot be re-activated.
+
+    $bp->update_bank_account({
+        id       => 'BA3gES',
+        is_valid => 0,
+        meta     => { foo => 'bar' },
+    });
+
+Returns a bank account hashref.
+See ["get\_bank\_account"](#get\_bank\_account) for an example response.
+
+## invalidate\_bank\_account
+
+    invalidate_bank_account($bank_account_id);
+
+Invalidates a bank account.
+A bank account id is required.
+This is a convenience method that does the equivalent of:
+
+    update_bank_account({ id => $bank_id, is_valid => 0 });
+
+Returns a bank account hashref.
 See ["get\_bank\_account"](#get\_bank\_account) for an example response.
 
 ## create\_credit

@@ -31,10 +31,10 @@ my %WriteMakefileArgs = (
     "HTTP::Request::Common" => 0,
     "JSON" => 0,
     "LWP::UserAgent" => 0,
-    "Moo" => 0,
-    "Moo::Role" => 0
+    "Moose" => 0,
+    "Moose::Role" => 0
   },
-  "VERSION" => "0.0001",
+  "VERSION" => "0.0100",
   "test" => {
     "TESTS" => "t/*.t"
   }
