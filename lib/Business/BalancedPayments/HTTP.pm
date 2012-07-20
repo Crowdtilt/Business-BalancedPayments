@@ -1,5 +1,5 @@
 package Business::BalancedPayments::HTTP;
-use Moo::Role;
+use Moose::Role;
 
 use HTTP::Request::Common qw(GET POST PUT);
 use JSON qw(from_json to_json);
@@ -49,18 +49,14 @@ sub _req {
     $req->authorization_basic($self->secret);
     $req->header(content_type => 'application/json');
     my $res = $self->ua->request($req);
-    _check_res($res);
+    return undef if $res->code == 404;
+    die $res unless $res->is_success;
     return $res->content ? from_json($res->content) : 1;
 }
 
 sub _url {
     my ($self, $path) = @_;
     return $path =~ /^http/ ? $path : $self->base_url . $path;
-}
-
-sub _check_res {
-    my ($res) = @_;
-    die $res unless $res->is_success;
 }
 
 1;
