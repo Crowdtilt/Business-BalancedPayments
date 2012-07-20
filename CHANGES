@@ -1,0 +1,4 @@
+Revision history for Business::BalancedPayments
+ 
+1.0100  2012-07-20
+        Added update_bank_account and invalidate_bank_account methods.

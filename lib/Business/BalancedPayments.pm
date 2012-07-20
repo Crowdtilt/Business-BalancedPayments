@@ -1,5 +1,5 @@
 package Business::BalancedPayments;
-use Moo;
+use Moose;
 with 'Business::BalancedPayments::HTTP';
 
 use Carp qw(croak);
@@ -69,7 +69,11 @@ sub create_account {
 sub update_account {
     my ($self, $account) = @_;
     croak 'The account param must be a hashref' unless ref $account eq 'HASH';
-    return $self->put($account->{uri}, $account);
+    croak 'The account must have an id or uri field'
+        unless $account->{uri} || $account->{id};
+    my $account_uri = $account->{uri}
+        || join '/', $self->marketplace->{uri}, 'accounts', $account->{id};
+    return $self->put($account_uri, $account);
 }
 
 sub add_card {
@@ -151,10 +155,25 @@ sub get_bank_account {
 }
 
 sub create_bank_account {
-    my ($self, $bank_account) = @_;
-    croak 'The bank_account must be a hashref'
-        unless ref $bank_account eq 'HASH';
-    return $self->post($self->marketplace->{bank_accounts_uri}, $bank_account);
+    my ($self, $bank) = @_;
+    croak 'The bank account must be a hashref' unless ref $bank eq 'HASH';
+    return $self->post($self->marketplace->{bank_accounts_uri}, $bank);
+}
+
+sub update_bank_account {
+    my ($self, $bank) = @_;
+    croak 'The bank account must be a hashref' unless ref $bank eq 'HASH';
+    croak 'The bank account must have an id or uri field'
+        unless $bank->{uri} || $bank->{id};
+    my $bank_uri = $bank->{uri}
+        || join '/', $self->marketplace->{uri}, 'bank_accounts', $bank->{id};
+    return $self->put($bank_uri, $bank);
+}
+
+sub invalidate_bank_account {
+    my ($self, $bank_id) = @_;
+    croak 'A bank id is required' unless defined $bank_id;
+    return $self->update_bank_account({ id => $bank_id, is_valid => 0 });
 }
 
 sub create_credit {
@@ -310,7 +329,8 @@ See L</get_account> for an example response.
     update_account($account)
 
 Updates an account.
-it expects an account hashref, such as one returned by L</get_account>
+It expects an account hashref, such as one returned by L</get_account>.
+The account hashref must contain a uri or id field.
 
 =head2 add_card
 
@@ -495,8 +515,8 @@ A bank account hashref is required:
         bank_code      => "321174851",
     });
 
+Returns a bank account hashref.
 See L</get_bank_account> for an example response.
-
 
 =head2 add_bank_account
 
@@ -517,7 +537,41 @@ It expects a bank account hashref and an account hashref:
 
 This operation implicitly adds the "merchant" role to the account.
 
-Returns an bank_account hashref.
+Returns a bank account hashref.
+See L</get_bank_account> for an example response.
+
+=head2 update_bank_account
+
+    update_bank_account($bank_account)
+
+Updates a bank account.
+A bank account hashref must be provided which must contain an id or uri for
+the bank account.
+Balanced only allows you to update the is_valid and meta fields.
+You may invalidate a bank account by passing is_valid with a false value.
+Once a bank account has been invalidated it cannot be re-activated.
+
+    $bp->update_bank_account({
+        id       => 'BA3gES',
+        is_valid => 0,
+        meta     => { foo => 'bar' },
+    });
+
+Returns a bank account hashref.
+See L</get_bank_account> for an example response.
+
+
+=head2 invalidate_bank_account
+
+    invalidate_bank_account($bank_account_id);
+
+Invalidates a bank account.
+A bank account id is required.
+This is a convenience method that does the equivalent of:
+
+    update_bank_account({ id => $bank_id, is_valid => 0 });
+
+Returns a bank account hashref.
 See L</get_bank_account> for an example response.
 
 =head2 create_credit
