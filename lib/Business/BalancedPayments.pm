@@ -126,10 +126,22 @@ sub capture_hold {
         $self->marketplace->{debits_uri}, { hold_uri => $hold->{uri} });
 }
 
+sub get_debit {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->marketplace->{debits_uri} . "/$id");
+}
+
 sub get_hold {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
     return $self->get($self->marketplace->{holds_uri} . "/$id");
+}
+
+sub get_refunds {
+    my ($self, $debit) = @_;
+    croak 'The debit param is missing' unless defined $debit;
+    return $self->get($debit->{refunds_uri});
 }
 
 sub void_hold {
@@ -199,9 +211,9 @@ sub create_credit {
     if ($bank_account) {
         croak 'The bank_account param must be a hashref'
             unless ref $bank_account eq 'HASH';
-        croak 'The bank_account is a uri' unless$bank_account->{uri};
+        croak 'The bank_account is a uri' unless $bank_account->{uri};
         croak 'The bank_account is missing an credits_uri'
-            unless$bank_account->{account}{credits_uri};
+            unless $bank_account->{account}{credits_uri};
         $credits_uri = $bank_account->{account}{credits_uri};
         $credit->{bank_account_uri} = $bank_account->{uri};
     }
@@ -349,6 +361,69 @@ and an account hashref, such as one returned by L</get_account>.
 Returns an account hashref.
 See L</get_account> for an example response.
 
+=head2 get_debit
+
+    get_debit($debit_id)
+
+Returns the debit with the given id.
+Example response:
+{
+    "account": {
+        "holds_uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu/holds",
+        "name": null,
+        "roles": [
+            "buyer"
+        ],
+        "created_at": "2012-06-08T02:00:18.233961Z",
+        "uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu",
+        "bank_accounts_uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu/bank_accounts",
+        "refunds_uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu/refunds",
+        "meta": {},
+        "debits_uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu/debits",
+        "transactions_uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu/transactions",
+        "email_address": "will@example.org",
+        "id": "AC5quPICW5qEHXac1KnjKGYu",
+        "credits_uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu/credits",
+        "cards_uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu/cards"
+    },
+    "fee": 5,
+    "description": null,
+    "refunds_uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/debits/WD5jdE8D7ae6yz8zoYjGS3W1/refunds",
+    "amount": 150,
+    "created_at": "2012-06-14T15:00:29.473664Z",
+    "uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/debits/WD5jdE8D7ae6yz8zoYjGS3W1",
+    "source": {
+        "expiration_month": 12,
+        "name": "Specific",
+        "expiration_year": 2020,
+        "brand": "MasterCard",
+        "uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu/cards/CC5ZgDKNiP7v0JTbUX4YzC0F",
+        "id": "CC5ZgDKNiP7v0JTbUX4YzC0F",
+        "card_type": "mastercard",
+        "is_valid": true,
+        "last_four": 5100,
+        "created_at": "2012-06-10T19:02:04.866150Z"
+    },
+    "transaction_number": "W546-439-9967",
+    "meta": {},
+    "appears_on_statement_as": "example.com",
+    "hold": {
+        "fee": 35,
+        "description": null,
+        "created_at": "2012-06-14T15:00:05.576299Z",
+        "is_void": false,
+        "expires_at": "2012-06-21T15:00:05.539688Z",
+        "uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/holds/HL4Sm5lhFIaCYEvXj8Ib85Ma",
+        "amount": 200,
+        "meta": {},
+        "account_uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu",
+        "source_uri": "/v1/marketplaces/TEST-MP6IEymJ6ynwnSoqJQnUTacN/accounts/AC5quPICW5qEHXac1KnjKGYu/cards/CC5ZgDKNiP7v0JTbUX4YzC0F",
+        "id": "HL4Sm5lhFIaCYEvXj8Ib85Ma"
+    },
+    "id": "WD5jdE8D7ae6yz8zoYjGS3W1",
+    "available_at": "2012-06-14T15:00:29.409531Z"
+}
+
 =head2 get_hold
 
     get_hold($hold_id)
@@ -445,6 +520,74 @@ Example response:
    },
    transaction_number => "W476-365-3767",
  }
+
+=head2 get_refunds
+
+    get_refunds($debit)
+
+Gets the refunds associated with a specific debit.
+
+    my $debit = $bp->get_debit($debit_id);
+    $bp->get_refunds($debit);
+
+Returns a refunds hashref.
+Example response.
+{
+  'first_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/debits/WD7jEGsn4BWa0ciCgDwBZ3Jk/refunds?limit=10&offset=0',
+  'items' => [
+    {
+      'account' => {
+        'bank_accounts_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/accounts/AC5adeMJzmuSm4AILPMXgdx7/bank_accounts',
+        'cards_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/accounts/AC5adeMJzmuSm4AILPMXgdx7/cards',
+        'created_at' => '2012-08-27T16:31:33.229336Z',
+        'credits_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/accounts/AC5adeMJzmuSm4AILPMXgdx7/credits',
+        'debits_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/accounts/AC5adeMJzmuSm4AILPMXgdx7/debits',
+        'email_address' => 'angela.chang@alumni.stanford.edu',
+        'holds_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/accounts/AC5adeMJzmuSm4AILPMXgdx7/holds',
+        'id' => 'AC5adeMJzmuSm4AILPMXgdx7',
+        'meta' => {},
+        'name' => undef,
+        'refunds_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/accounts/AC5adeMJzmuSm4AILPMXgdx7/refunds',
+        'roles' => [
+          'buyer'
+        ],
+        'transactions_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/accounts/AC5adeMJzmuSm4AILPMXgdx7/transactions',
+        'uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/accounts/AC5adeMJzmuSm4AILPMXgdx7'
+      },
+      'amount' => 323,
+      'appears_on_statement_as' => 'example.com',
+      'created_at' => '2012-08-27T16:54:46.595330Z',
+      'debit' => {
+        'amount' => 323,
+        'appears_on_statement_as' => 'example.com',
+        'available_at' => '2012-08-27T16:40:41.717568Z',
+        'created_at' => '2012-08-27T16:40:41.845265Z',
+        'description' => undef,
+        'fee' => 10,
+        'hold_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/holds/HL3dEJNhx6gKohdTWgXN0aVs',
+        'id' => 'WD7jEGsn4BWa0ciCgDwBZ3Jk',
+        'meta' => {},
+        'refunds_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/debits/WD7jEGsn4BWa0ciCgDwBZ3Jk/refunds',
+        'source_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/accounts/AC5adeMJzmuSm4AILPMXgdx7/cards/CC39zJCJCZNBsUiwnu22OaQu',
+        'transaction_number' => 'W139-902-8037',
+        'uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/debits/WD7jEGsn4BWa0ciCgDwBZ3Jk'
+      },
+      'description' => '',
+      'fee' => -10,
+      'id' => 'RF74aaChJLzwdIQvosYQr9FQ',
+      'meta' => {},
+      'transaction_number' => 'RF966-744-5492',
+      'uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/refunds/RF74aaChJLzwdIQvosYQr9FQ'
+    }
+  ],
+  'last_uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/debits/WD7jEGsn4BWa0ciCgDwBZ3Jk/refunds?limit=10&offset=0',
+  'limit' => 10,
+  'next_uri' => undef,
+  'offset' => 0,
+  'previous_uri' => undef,
+  'total' => 1,
+  'uri' => '/v1/marketplaces/MP35BtXWqGuYEsv2RHH2CGtH/debits/WD7jEGsn4BWa0ciCgDwBZ3Jk/refunds?limit=10&offset=0'
+}
 
 =head2 void_hold
 
