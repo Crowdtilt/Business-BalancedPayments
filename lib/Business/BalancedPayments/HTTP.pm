@@ -55,7 +55,7 @@ sub _req {
         sleep 1;
         $res = $self->ua->request($req);
     }
-    return undef if $res->code == 404;
+    return undef if $res->code =~ /404|410/;
     die $res unless $res->is_success;
     return $res->content ? from_json($res->content) : 1;
 }
