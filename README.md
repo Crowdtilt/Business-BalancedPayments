@@ -4,7 +4,7 @@ Business::BalancedPayments - BalancedPayments API bindings
 
 # VERSION
 
-version 0.0100
+version 0.0201
 
 # SYNOPSIS
 
@@ -29,7 +29,7 @@ This module provides bindings for the
 
 # METHODS
 
-## get\_card
+## get_card
 
     get_card($id)
 
@@ -51,7 +51,7 @@ Example response:
         uri              => "/v1/marketplaces/MK98f1/cards/CC92QRQcwUCp5zpzKS",
     }
 
-## create\_card
+## create_card
 
     create_card({
         card_number      => "5105105105105100",
@@ -61,9 +61,9 @@ Example response:
     })
 
 Creates a credit card.
-See ["get\_card"](#get\_card) for an example response.
+See ["get_card"](#get_card) for an example response.
 
-## get\_account
+## get_account
 
     get_account($id)
 
@@ -88,33 +88,33 @@ Example response:
         transactions_uri  => "/v1/marketplaces/MK98/accounts/AC7A/transactions",
     }
 
-## get\_account\_by\_email
+## get_account_by_email
 
     get_account_by_email($email)
 
 Returns the account for the given email address.
-See ["get\_account"](#get\_account) for an example response.
+See ["get_account"](#get_account) for an example response.
 
-## create\_account
+## create_account
 
     create_account($account)
     create_account($account, card => $card)
 
 Creates an account.
 An account hashref is required.
-The account hashref must have an email\_address field:
+The account hashref must have an email_address field:
 
     $bp->create_account({ email_address => 'bob@crowdtilt.com' });
 
 It is possible to create an account and associate it with a credit card at the
 same time.
 You can do this in 2 ways.
-You can provide a card such as one returned by calling ["get\_card"](#get\_card):
+You can provide a card such as one returned by calling ["get_card"](#get_card):
 
     my $card = $bp->get_card($card_id);
     $bp->create_account({ email_address => 'bob@crowdtilt.com' }, card => $card)
 
-Alternatively, you can provide a card\_uri inside the account hashref:
+Alternatively, you can provide a card_uri inside the account hashref:
 
     my $card = $bp->get_card($card_id);
     $bp->create_account({
@@ -123,28 +123,28 @@ Alternatively, you can provide a card\_uri inside the account hashref:
     });
 
 Returns an account hashref.
-See ["get\_account"](#get\_account) for an example response.
+See ["get_account"](#get_account) for an example response.
 
-## update\_account
+## update_account
 
     update_account($account)
 
 Updates an account.
-It expects an account hashref, such as one returned by ["get\_account"](#get\_account).
+It expects an account hashref, such as one returned by ["get_account"](#get_account).
 The account hashref must contain a uri or id field.
 
-## add\_card
+## add_card
 
     add_card($card, account => $account)
 
 Adds a card to an account.
-It expects a card hashref, such as one returned by ["get\_card"](#get\_card),
-and an account hashref, such as one returned by ["get\_account"](#get\_account).
+It expects a card hashref, such as one returned by ["get_card"](#get_card),
+and an account hashref, such as one returned by ["get_account"](#get_account).
 
 Returns an account hashref.
-See ["get\_account"](#get\_account) for an example response.
+See ["get_account"](#get_account) for an example response.
 
-## get\_hold
+## get_hold
 
     get_hold($hold_id)
 
@@ -177,7 +177,7 @@ Example response:
       },
     }
 
-## create\_hold
+## create_hold
 
     create_hold($hold, account => $account)
     create_hold($hold, card => $card)
@@ -198,9 +198,9 @@ You can pass in a card if you want to charge a specific card:
     my $card = bp->get_card($card_id);
     $bp->create_hold({ amount => 250 }, card => $card);
 
-See ["get\_hold"](#get\_hold) for an example response.
+See ["get_hold"](#get_hold) for an example response.
 
-## capture\_hold
+## capture_hold
 
     capture_hold($hold)
 
@@ -241,7 +241,7 @@ Example response:
       transaction_number => "W476-365-3767",
     }
 
-## void\_hold
+## void_hold
 
     void_hold($hold)
 
@@ -251,9 +251,9 @@ Voids a hold.
     $bp->void_hold($hold);
 
 Returns a hold hashref.
-See ["get\_hold"](#get\_hold) for an example response.
+See ["get_hold"](#get_hold) for an example response.
 
-## refund\_debit
+## refund_debit
 
     refund_debit($debit)
 
@@ -283,7 +283,7 @@ Example response:
         debit                   => { ... },
     }
 
-## get\_bank\_account
+## get_bank_account
 
     get_bank_account($id)
 
@@ -303,7 +303,7 @@ Example response:
         account     =>  { ... },
     }
 
-## create\_bank\_account
+## create_bank_account
 
     create_bank_account($bank_account)
 
@@ -317,9 +317,9 @@ A bank account hashref is required:
     });
 
 Returns a bank account hashref.
-See ["get\_bank\_account"](#get\_bank\_account) for an example response.
+See ["get_bank_account"](#get_bank_account) for an example response.
 
-## add\_bank\_account
+## add_bank_account
 
     add_bank_account($bank_account, account => $account)
 
@@ -339,17 +339,17 @@ It expects a bank account hashref and an account hashref:
 This operation implicitly adds the "merchant" role to the account.
 
 Returns a bank account hashref.
-See ["get\_bank\_account"](#get\_bank\_account) for an example response.
+See ["get_bank_account"](#get_bank_account) for an example response.
 
-## update\_bank\_account
+## update_bank_account
 
     update_bank_account($bank_account)
 
 Updates a bank account.
 A bank account hashref must be provided which must contain an id or uri for
 the bank account.
-Balanced only allows you to update the is\_valid and meta fields.
-You may invalidate a bank account by passing is\_valid with a false value.
+Balanced only allows you to update the is_valid and meta fields.
+You may invalidate a bank account by passing is_valid with a false value.
 Once a bank account has been invalidated it cannot be re-activated.
 
     $bp->update_bank_account({
@@ -359,9 +359,9 @@ Once a bank account has been invalidated it cannot be re-activated.
     });
 
 Returns a bank account hashref.
-See ["get\_bank\_account"](#get\_bank\_account) for an example response.
+See ["get_bank_account"](#get_bank_account) for an example response.
 
-## invalidate\_bank\_account
+## invalidate_bank_account
 
     invalidate_bank_account($bank_account_id);
 
@@ -372,9 +372,9 @@ This is a convenience method that does the equivalent of:
     update_bank_account({ id => $bank_id, is_valid => 0 });
 
 Returns a bank account hashref.
-See ["get\_bank\_account"](#get\_bank\_account) for an example response.
+See ["get_bank_account"](#get_bank_account) for an example response.
 
-## create\_credit
+## create_credit
 
     create_credit($credit, account => $account)
     create_credit($credit, bank_account => $bank_account)
