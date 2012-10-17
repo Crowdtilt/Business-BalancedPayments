@@ -14,6 +14,8 @@ my %WriteMakefileArgs = (
   "BUILD_REQUIRES" => {
     "File::Find" => 0,
     "File::Temp" => 0,
+    "HTTP::Response" => 0,
+    "Test::Mock::LWP::Dispatch" => 0,
     "Test::More" => 0,
     "Test::Most" => 0,
     "strict" => 0,
@@ -34,7 +36,7 @@ my %WriteMakefileArgs = (
     "Moose" => 0,
     "Moose::Role" => 0
   },
-  "VERSION" => "0.0100",
+  "VERSION" => "0.0201",
   "test" => {
     "TESTS" => "t/*.t"
   }
