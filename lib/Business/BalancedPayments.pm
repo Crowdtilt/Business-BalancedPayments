@@ -24,6 +24,11 @@ sub _build_marketplace {
     return $data->{items}[0];
 }
 
+sub get_transactions {
+    my ($self) = @_;
+    return $self->get($self->marketplaces_uri . "/transactions");
+}
+
 sub get_card {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
@@ -126,10 +131,22 @@ sub capture_hold {
         $self->marketplace->{debits_uri}, { hold_uri => $hold->{uri} });
 }
 
+sub get_debit {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->marketplace->{debits_uri} . "/$id");
+}
+
 sub get_hold {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
     return $self->get($self->marketplace->{holds_uri} . "/$id");
+}
+
+sub get_refunds {
+    my ($self, $debit) = @_;
+    croak 'The debit param is missing' unless defined $debit;
+    return $self->get($debit->{refunds_uri});
 }
 
 sub void_hold {
@@ -199,9 +216,9 @@ sub create_credit {
     if ($bank_account) {
         croak 'The bank_account param must be a hashref'
             unless ref $bank_account eq 'HASH';
-        croak 'The bank_account is a uri' unless$bank_account->{uri};
+        croak 'The bank_account is a uri' unless $bank_account->{uri};
         croak 'The bank_account is missing an credits_uri'
-            unless$bank_account->{account}{credits_uri};
+            unless $bank_account->{account}{credits_uri};
         $credits_uri = $bank_account->{account}{credits_uri};
         $credit->{bank_account_uri} = $bank_account->{uri};
     }
@@ -233,6 +250,12 @@ This module provides bindings for the
 L<BalancedPayments|https://www.balancedpayments.com> API.
 
 =head1 METHODS
+
+=head2 get_transactions
+
+    get_transactions()
+
+Returns the transactions for this marketplace.
 
 =head2 get_card
 
@@ -349,6 +372,41 @@ and an account hashref, such as one returned by L</get_account>.
 Returns an account hashref.
 See L</get_account> for an example response.
 
+=head2 get_debit
+
+    get_debit($debit_id)
+
+Returns the debit with the given id.
+Example response:
+
+  {
+    id                       =>  "WD1xtdUeixQIfJEsg4RwwHjQ",
+    transaction_number       =>  "W553-201-5667",
+    amount                   =>  50,
+    fee                      =>  1,
+    description              =>  undef,
+    appears_on_statement_as  =>  "example.com",
+    available_at             =>  "2012-10-25T04:48:19.337522Z",
+    created_at               =>  "2012-10-25T04:48:19.443904Z",
+    uri                      =>  "/v1/marketplaces/MK98/debits/WD2L",
+    refunds_uri              => "/v1/marketplaces/MK98/debits/WD2L/refunds",
+    account                  =>  { ...  },
+    hold                     =>  { ...  },
+    meta                     =>  { ...  },
+    source => {
+      brand            => "MasterCard",
+      card_type        => "mastercard",
+      created_at       => "2012-06-07T11:00:40.003671Z",
+      expiration_month => 12,
+      expiration_year  => 2020,
+      id               => "CC92QRQcwUCp5zpzEz7lXKS",
+      is_valid         => 1,
+      last_four        => 5100,
+      name             => undef,
+      uri => "/v1/marketplaces/MK98/accounts/AC7A/cards/CC92QRQcwUCp5zpzEz7lXKS",
+    },
+  }
+
 =head2 get_hold
 
     get_hold($hold_id)
@@ -360,26 +418,15 @@ Example response:
    id          => "HL5byxIzSvf0entZuO9eEsWJ",
    uri         => "/v1/marketplaces/MK98/holds/HL5byxIzSvf0entZuO9eEsWJ",
    amount      => 200,
-   account     => { ... },
-   created_at  => "2012-06-08T09:23:53.745746Z",
-   debit       => undef,
    description => undef,
+   created_at  => "2012-06-08T09:23:53.745746Z",
    expires_at  => "2012-06-15T09:23:53.705009Z",
    fee         => 35,
    is_void     => 0,
-   meta        => {},
-   source => {
-     brand            => "MasterCard",
-     card_type        => "mastercard",
-     created_at       => "2012-06-07T11:00:40.003671Z",
-     expiration_month => 12,
-     expiration_year  => 2020,
-     id               => "CC92QRQcwUCp5zpzEz7lXKS",
-     is_valid         => 1,
-     last_four        => 5100,
-     name             => undef,
-     uri => "/v1/marketplaces/MK98/accounts/AC7A/cards/CC92QRQcwUCp5zpzEz7lXKS",
-   },
+   account     => { ... },
+   debit       => { ... },
+   meta        => { ... },
+   source      => { ... },
  }
 
 =head2 create_hold
@@ -420,6 +467,7 @@ Example response:
 
  {
    id                      => "WD2Lpzyz8Okbhx2Nbw7YuTP3",
+   transaction_number      => "W476-365-3767",
    uri                     => "/v1/marketplaces/MK98/debits/WD2L",
    amount                  => 50,
    appears_on_statement_as => "example.com",
@@ -427,24 +475,49 @@ Example response:
    created_at              => "2012-06-08T09:57:27.750828Z",
    description             => undef,
    fee                     => 1,
-   meta                    => {},
+   meta                    => { ... },
    hold                    => { ... },
    account                 => { ... },
+   source                  => { ... },
    refunds_uri             => "/v1/marketplaces/MK98/debits/WD2L/refunds",
-   source => {
-     brand            => "MasterCard",
-     card_type        => "mastercard",
-     created_at       => "2012-06-07T11:00:40.003671Z",
-     expiration_month => 12,
-     expiration_year  => 2020,
-     id               => "CC92QRQcwUCp5zpzEz7lXKS",
-     is_valid         => 1,
-     last_four        => 5100,
-     name             => undef,
-     uri => "/v1/marketplaces/MK98/accounts/AC7A/cards/CC92QRQcwUCp5zpzEz7lXKS",
-   },
-   transaction_number => "W476-365-3767",
  }
+
+=head2 get_refunds
+
+    get_refunds($debit)
+
+Gets the refunds associated with a specific debit.
+
+    my $debit = $bp->get_debit($debit_id);
+    $bp->get_refunds($debit);
+
+Returns a refunds hashref.
+Example response.
+  {
+    items => [
+      {
+        id                       =>  'RF74',
+        transaction_number       =>  'RF966-744-5492',
+        amount                   =>  323,
+        fee                      =>  -10,
+        description              =>  '',
+        appears_on_statement_as  =>  'example.com',
+        created_at               =>  '2012-08-27T16:54:46.595330Z',
+        debit                    =>  { ... },
+        meta                     =>  { ... },
+        account                  =>  { ... },
+        uri                      =>  '/v1/marketplaces/MP35/refunds/RF74',
+      }
+    ],
+    offset    => 0,
+    limit     => 10,
+    next_uri  => undef,
+    total     => 1,
+    uri       => '/v1/marketplaces/MP35/debits/WD2L/refunds?limit=10&offset=0',
+    first_uri => '/v1/marketplaces/MP35/debits/WD2L/refunds?limit=10&offset=0',
+    last_uri  => '/v1/marketplaces/MP35/debits/WD2L/refunds?limit=10&offset=0',
+    previous_uri => undef,
+  }
 
 =head2 void_hold
 
