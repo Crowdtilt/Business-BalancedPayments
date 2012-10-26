@@ -25,10 +25,8 @@ sub _build_marketplace {
 }
 
 sub get_transactions {
-    my ($self, %args) = @_;
-    my $qp = '?';
-    $qp .= "$_=$args{$_}&" for keys %args;
-    return $self->get($self->marketplace->{uri} . "/transactions$qp");
+    my ($self) = @_;
+    return $self->get($self->marketplaces_uri . "/transactions");
 }
 
 sub get_card {
@@ -257,7 +255,7 @@ L<BalancedPayments|https://www.balancedpayments.com> API.
 
     get_transactions()
 
-Returns all transactions on this marketplace
+Returns the transactions for this marketplace.
 
 =head2 get_card
 
