@@ -4,7 +4,7 @@ Business::BalancedPayments - BalancedPayments API bindings
 
 # VERSION
 
-version 0.0201
+version 0.0400
 
 # SYNOPSIS
 
@@ -28,6 +28,12 @@ This module provides bindings for the
 [BalancedPayments](https://www.balancedpayments.com) API.
 
 # METHODS
+
+## get_transactions
+
+    get_transactions()
+
+Returns the transactions for this marketplace.
 
 ## get_card
 
@@ -144,25 +150,27 @@ and an account hashref, such as one returned by ["get_account"](#get_account).
 Returns an account hashref.
 See ["get_account"](#get_account) for an example response.
 
-## get_hold
+## get_debit
 
-    get_hold($hold_id)
+    get_debit($debit_id)
 
-Returns the hold with the given id.
+Returns the debit with the given id.
 Example response:
 
     {
-      id          => "HL5byxIzSvf0entZuO9eEsWJ",
-      uri         => "/v1/marketplaces/MK98/holds/HL5byxIzSvf0entZuO9eEsWJ",
-      amount      => 200,
-      account     => { ... },
-      created_at  => "2012-06-08T09:23:53.745746Z",
-      debit       => undef,
-      description => undef,
-      expires_at  => "2012-06-15T09:23:53.705009Z",
-      fee         => 35,
-      is_void     => 0,
-      meta        => {},
+      id                       =>  "WD1xtdUeixQIfJEsg4RwwHjQ",
+      transaction_number       =>  "W553-201-5667",
+      amount                   =>  50,
+      fee                      =>  1,
+      description              =>  undef,
+      appears_on_statement_as  =>  "example.com",
+      available_at             =>  "2012-10-25T04:48:19.337522Z",
+      created_at               =>  "2012-10-25T04:48:19.443904Z",
+      uri                      =>  "/v1/marketplaces/MK98/debits/WD2L",
+      refunds_uri              => "/v1/marketplaces/MK98/debits/WD2L/refunds",
+      account                  =>  { ...  },
+      hold                     =>  { ...  },
+      meta                     =>  { ...  },
       source => {
         brand            => "MasterCard",
         card_type        => "mastercard",
@@ -175,6 +183,28 @@ Example response:
         name             => undef,
         uri => "/v1/marketplaces/MK98/accounts/AC7A/cards/CC92QRQcwUCp5zpzEz7lXKS",
       },
+    }
+
+## get_hold
+
+    get_hold($hold_id)
+
+Returns the hold with the given id.
+Example response:
+
+    {
+      id          => "HL5byxIzSvf0entZuO9eEsWJ",
+      uri         => "/v1/marketplaces/MK98/holds/HL5byxIzSvf0entZuO9eEsWJ",
+      amount      => 200,
+      description => undef,
+      created_at  => "2012-06-08T09:23:53.745746Z",
+      expires_at  => "2012-06-15T09:23:53.705009Z",
+      fee         => 35,
+      is_void     => 0,
+      account     => { ... },
+      debit       => { ... },
+      meta        => { ... },
+      source      => { ... },
     }
 
 ## create_hold
@@ -215,6 +245,7 @@ Example response:
 
     {
       id                      => "WD2Lpzyz8Okbhx2Nbw7YuTP3",
+      transaction_number      => "W476-365-3767",
       uri                     => "/v1/marketplaces/MK98/debits/WD2L",
       amount                  => 50,
       appears_on_statement_as => "example.com",
@@ -222,24 +253,73 @@ Example response:
       created_at              => "2012-06-08T09:57:27.750828Z",
       description             => undef,
       fee                     => 1,
-      meta                    => {},
+      meta                    => { ... },
       hold                    => { ... },
       account                 => { ... },
+      source                  => { ... },
       refunds_uri             => "/v1/marketplaces/MK98/debits/WD2L/refunds",
-      source => {
-        brand            => "MasterCard",
-        card_type        => "mastercard",
-        created_at       => "2012-06-07T11:00:40.003671Z",
-        expiration_month => 12,
-        expiration_year  => 2020,
-        id               => "CC92QRQcwUCp5zpzEz7lXKS",
-        is_valid         => 1,
-        last_four        => 5100,
-        name             => undef,
-        uri => "/v1/marketplaces/MK98/accounts/AC7A/cards/CC92QRQcwUCp5zpzEz7lXKS",
-      },
-      transaction_number => "W476-365-3767",
     }
+
+    =head2 get_refund
+
+     get_refund($id)
+
+    Gets a refund by id.
+
+     $bp->get_refund($id);
+
+    Returns a refund hashref.
+    Example response.
+      {
+        id                       =>  'RF74',
+        transaction_number       =>  'RF966-744-5492',
+        amount                   =>  323,
+        fee                      =>  -10,
+        description              =>  '',
+        appears_on_statement_as  =>  'example.com',
+        created_at               =>  '2012-08-27T16:54:46.595330Z',
+        debit                    =>  { ... },
+        meta                     =>  { ... },
+        account                  =>  { ... },
+        uri                      =>  '/v1/marketplaces/MP35/refunds/RF74',
+      }
+
+## get_refunds
+
+    get_refunds($debit)
+
+Gets the refunds associated with a specific debit.
+
+    my $debit = $bp->get_debit($debit_id);
+    $bp->get_refunds($debit);
+
+Returns a refunds hashref.
+Example response.
+  {
+    items => [
+      {
+        id                       =>  'RF74',
+        transaction_number       =>  'RF966-744-5492',
+        amount                   =>  323,
+        fee                      =>  -10,
+        description              =>  '',
+        appears_on_statement_as  =>  'example.com',
+        created_at               =>  '2012-08-27T16:54:46.595330Z',
+        debit                    =>  { ... },
+        meta                     =>  { ... },
+        account                  =>  { ... },
+        uri                      =>  '/v1/marketplaces/MP35/refunds/RF74',
+      }
+    ],
+    offset    => 0,
+    limit     => 10,
+    next_uri  => undef,
+    total     => 1,
+    uri       => '/v1/marketplaces/MP35/debits/WD2L/refunds?limit=10&offset=0',
+    first_uri => '/v1/marketplaces/MP35/debits/WD2L/refunds?limit=10&offset=0',
+    last_uri  => '/v1/marketplaces/MP35/debits/WD2L/refunds?limit=10&offset=0',
+    previous_uri => undef,
+  }
 
 ## void_hold
 
@@ -374,10 +454,18 @@ This is a convenience method that does the equivalent of:
 Returns a bank account hashref.
 See ["get_bank_account"](#get_bank_account) for an example response.
 
+## get_credit
+
+    get_credit($credit_id);
+
+Gets a credit.
+This is a way to get information about a specific credit, which can be useful
+to check its status or get fee information about it.
+
 ## create_credit
 
-    create_credit($credit, account => $account)
-    create_credit($credit, bank_account => $bank_account)
+    create_credit($credit, account => $account);
+    create_credit($credit, bank_account => $bank_account);
 
 Creates a credit.
 This is a way of sending money to merchant accounts.
