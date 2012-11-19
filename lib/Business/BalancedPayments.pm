@@ -143,6 +143,12 @@ sub get_hold {
     return $self->get($self->marketplace->{holds_uri} . "/$id");
 }
 
+sub get_refund {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->marketplace->{refunds_uri} . "/$id");
+}
+
 sub get_refunds {
     my ($self, $debit) = @_;
     croak 'The debit param is missing' unless defined $debit;
@@ -481,6 +487,30 @@ Example response:
    source                  => { ... },
    refunds_uri             => "/v1/marketplaces/MK98/debits/WD2L/refunds",
  }
+
+ =head2 get_refund
+
+     get_refund($id)
+
+ Gets a refund by id.
+
+     $bp->get_refund($id);
+
+ Returns a refund hashref.
+ Example response.
+   {
+     id                       =>  'RF74',
+     transaction_number       =>  'RF966-744-5492',
+     amount                   =>  323,
+     fee                      =>  -10,
+     description              =>  '',
+     appears_on_statement_as  =>  'example.com',
+     created_at               =>  '2012-08-27T16:54:46.595330Z',
+     debit                    =>  { ... },
+     meta                     =>  { ... },
+     account                  =>  { ... },
+     uri                      =>  '/v1/marketplaces/MP35/refunds/RF74',
+   }
 
 =head2 get_refunds
 
