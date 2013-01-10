@@ -50,10 +50,12 @@ sub _req {
     $req->authorization_basic($self->secret);
     $req->header(content_type => 'application/json');
     my $res = $self->ua->request($req);
+    $self->_log_response($res);
     my $retries = $self->retries;
     while ($res->code =~ /^5/ and $retries--) {
         sleep 1;
         $res = $self->ua->request($req);
+        $self->_log_response($res);
     }
     return undef if $res->code =~ /404|410/;
     die $res unless $res->is_success;
@@ -63,6 +65,12 @@ sub _req {
 sub _url {
     my ($self, $path) = @_;
     return $path =~ /^http/ ? $path : $self->base_url . $path;
+}
+
+sub _log_response {
+    my ($self, $res) = @_;
+    $self->log(DEBUG => $res->status_line);
+    $self->log(DEBUG => $res->content);
 }
 
 1;
