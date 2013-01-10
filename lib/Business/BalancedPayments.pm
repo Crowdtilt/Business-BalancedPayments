@@ -3,14 +3,28 @@ use Moose;
 with 'Business::BalancedPayments::HTTP';
 
 use Carp qw(croak);
+use Log::Tiny;
 
 has secret      => (is => 'ro', required => 1                             );
 has merchant    => (is => 'rw', lazy => 1, builder => '_build_merchant'   );
 has marketplace => (is => 'rw', lazy => 1, builder => '_build_marketplace');
+has log_file    => (is => 'ro');
+has logger      => (is => 'rw');
 
 has api_keys_uri     => (is => 'ro', default => sub { '/v1/api_keys'     });
 has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants'    });
 has marketplaces_uri => (is => 'ro', default => sub { '/v1/marketplaces' });
+
+sub BUILD {
+    my ($self) = @_;
+    $self->logger(Log::Tiny->new($self->log_file)) if $self->log_file;
+}
+
+sub log {
+    my ($self, $level, $msg) = @_;
+    return unless $self->logger;
+    $self->logger->$level($msg);
+}
 
 sub _build_merchant {
     my ($self) = @_;
@@ -256,6 +270,18 @@ This module provides bindings for the
 L<BalancedPayments|https://www.balancedpayments.com> API.
 
 =head1 METHODS
+
+=head2 new
+
+    my $bp = Business::BalancedPayments->new(
+        secret   => $secret,
+        log_file => '/var/log/foo', # optional path to log file
+    );
+
+Instantiates a new `Business::BalancedPayments` client object.
+Requires C<secret>.
+If C<log_file> is provided, then logging is enabled.
+Logs are written to the file specified by C<log_file>.
 
 =head2 get_transactions
 
