@@ -49,6 +49,7 @@ sub _req {
     my ($self, $req) = @_;
     $req->authorization_basic($self->secret);
     $req->header(content_type => 'application/json');
+    $self->_log_request($req);
     my $res = $self->ua->request($req);
     $self->_log_response($res);
     my $retries = $self->retries;
@@ -65,6 +66,11 @@ sub _req {
 sub _url {
     my ($self, $path) = @_;
     return $path =~ /^http/ ? $path : $self->base_url . $path;
+}
+
+sub _log_request {
+    my ($self, $req) = @_;
+    $self->log(DEBUG => $req->method . ' => ' . $req->uri);
 }
 
 sub _log_response {
