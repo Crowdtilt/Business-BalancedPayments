@@ -4,7 +4,7 @@ Business::BalancedPayments - BalancedPayments API bindings
 
 # VERSION
 
-version 0.0400
+version 0.0500
 
 # SYNOPSIS
 
@@ -28,6 +28,36 @@ This module provides bindings for the
 [BalancedPayments](https://www.balancedpayments.com) API.
 
 # METHODS
+
+## new
+
+    my $bp = Business::BalancedPayments->new(
+        secret  => $secret,
+        logger  => $logger, # optional
+        retries => 3,       # optional
+    );
+
+Instantiates a new `Business::BalancedPayments` client object.
+Parameters:
+
+- secret
+
+Required. The Balanced Payments secret key for your account.
+
+- logger
+
+Optional.
+A logger-like object.
+It just needs to have a method named `DEBUG` that takes a single argument,
+the message to be logged.
+A [Log::Tiny](http://search.cpan.org/perldoc?Log::Tiny) object would be a good choice.
+
+- retries
+
+Optional.
+The number of times to retry requests in cases when Balanced returns a 5xx
+response.
+Defaults to 0.
 
 ## get_transactions
 
