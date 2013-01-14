@@ -3,7 +3,6 @@ use Moose;
 with 'Business::BalancedPayments::HTTP';
 
 use Carp qw(croak);
-use Log::Tiny;
 
 has secret      => (is => 'ro', required => 1                             );
 has merchant    => (is => 'ro', lazy => 1, builder => '_build_merchant'   );
