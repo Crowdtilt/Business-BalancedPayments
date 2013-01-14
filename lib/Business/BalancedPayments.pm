@@ -6,19 +6,13 @@ use Carp qw(croak);
 use Log::Tiny;
 
 has secret      => (is => 'ro', required => 1                             );
-has merchant    => (is => 'rw', lazy => 1, builder => '_build_merchant'   );
-has marketplace => (is => 'rw', lazy => 1, builder => '_build_marketplace');
-has log_file    => (is => 'ro');
-has logger      => (is => 'rw');
+has merchant    => (is => 'ro', lazy => 1, builder => '_build_merchant'   );
+has marketplace => (is => 'ro', lazy => 1, builder => '_build_marketplace');
+has logger      => (is => 'ro');
 
 has api_keys_uri     => (is => 'ro', default => sub { '/v1/api_keys'     });
 has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants'    });
 has marketplaces_uri => (is => 'ro', default => sub { '/v1/marketplaces' });
-
-sub BUILD {
-    my ($self) = @_;
-    $self->logger(Log::Tiny->new($self->log_file)) if $self->log_file;
-}
 
 sub log {
     my ($self, $level, $msg) = @_;
@@ -274,14 +268,36 @@ L<BalancedPayments|https://www.balancedpayments.com> API.
 =head2 new
 
     my $bp = Business::BalancedPayments->new(
-        secret   => $secret,
-        log_file => '/var/log/foo', # optional path to log file
+        secret  => $secret,
+        logger  => $logger, # optional
+        retries => 3,       # optional
     );
 
 Instantiates a new `Business::BalancedPayments` client object.
-Requires C<secret>.
-If C<log_file> is provided, then logging is enabled.
-Logs are written to the file specified by C<log_file>.
+Parameters:
+
+=over 4
+
+=item secret
+
+Required. The Balanced Payments secret key for your account.
+
+=item logger
+
+Optional.
+A logger-like object.
+It just needs to have a method named C<DEBUG> that takes a single argument,
+the message to be logged.
+A L<Log::Tiny> object would be a good choice.
+
+=item retries
+
+Optional.
+The number of times to retry requests in cases when Balanced returns a 5xx
+response.
+Defaults to 0.
+
+=back
 
 =head2 get_transactions
 
