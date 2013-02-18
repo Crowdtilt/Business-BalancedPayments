@@ -70,13 +70,19 @@ sub _url {
 
 sub _log_request {
     my ($self, $req) = @_;
-    $self->log(DEBUG => $req->method . ' => ' . $req->uri);
+    $self->log($req->method . ' => ' . $req->uri);
+    my $content = $req->content;
+    return unless length $content;
+    eval { $content = to_json from_json $content };
+    $self->log($content);
 }
 
 sub _log_response {
     my ($self, $res) = @_;
-    $self->log(DEBUG => $res->status_line);
-    $self->log(DEBUG => $res->content);
+    $self->log($res->status_line);
+    my $content = $res->content;
+    eval { $content = to_json from_json $content };
+    $self->log($content);
 }
 
 1;

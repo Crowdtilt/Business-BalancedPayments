@@ -14,9 +14,9 @@ has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants'    });
 has marketplaces_uri => (is => 'ro', default => sub { '/v1/marketplaces' });
 
 sub log {
-    my ($self, $level, $msg) = @_;
+    my ($self, $msg) = @_;
     return unless $self->logger;
-    $self->logger->$level($msg);
+    $self->logger->DEBUG("BP: $msg");
 }
 
 sub _build_merchant {
