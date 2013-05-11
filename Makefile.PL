@@ -10,7 +10,7 @@ use ExtUtils::MakeMaker 6.30;
 
 my %WriteMakefileArgs = (
   "ABSTRACT" => "BalancedPayments API bindings",
-  "AUTHOR" => "Naveed Massjouni <naveedm9\@gmail.com>, Khaled Hussein <khaled.hussein\@gmail.com>",
+  "AUTHOR" => "Khaled Hussein <khaled.hussein\@gmail.com>, Naveed Massjouni <naveedm9\@gmail.com>, Will Wolf<throughnothing\@gmail.com>",
   "BUILD_REQUIRES" => {
     "File::Find" => 0,
     "File::Temp" => 0,
@@ -36,7 +36,7 @@ my %WriteMakefileArgs = (
     "Moose" => 0,
     "Moose::Role" => 0
   },
-  "VERSION" => "0.0500",
+  "VERSION" => "0.0800",
   "test" => {
     "TESTS" => "t/*.t"
   }
