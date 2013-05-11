@@ -2,6 +2,8 @@ package Business::BalancedPayments;
 use Moose;
 with 'Business::BalancedPayments::HTTP';
 
+# VERSION
+
 use Carp qw(croak);
 
 has secret      => (is => 'ro', required => 1                             );
@@ -116,17 +118,15 @@ sub create_hold {
     my $account = $args{account};
     croak 'An account or card must be provided' unless $account or $card;
     my $holds_uri;
-    if ($account) {
+    if ($card) {
+        croak 'The card param must be a hashref' unless ref $card eq 'HASH';
+        $holds_uri = $card->{account}{holds_uri};
+    } elsif ($account) {
         croak 'The account must be a hashref' unless ref $account eq 'HASH';
         $holds_uri = $account->{holds_uri};
     }
-    if ($card) {
-        croak 'The card param must be a hashref' unless ref $card eq 'HASH';
-        croak 'The card is missing a uri' unless $card->{uri};
-        $holds_uri ||= $card->{account}{holds_uri};
-    }
-    croak 'No holds_uri found' unless $holds_uri;
-    $hold->{source_uri} = $card->{uri} if $card;
+    die 'Could not find a holds_uri' unless $holds_uri;
+    $hold->{source_uri} ||= $card->{uri} if $card->{uri};
     return $self->post($holds_uri, $hold);
 }
 
@@ -144,6 +144,26 @@ sub get_debit {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
     return $self->get($self->marketplace->{debits_uri} . "/$id");
+}
+
+sub create_debit {
+    my ($self, $debit, %args) = @_;
+    croak 'The debit param must be a hashref' unless ref $debit eq 'HASH';
+    croak 'No amount found' unless $debit->{amount};
+    my $card = $args{card};
+    my $account = $args{account};
+    croak 'An account or card must be provided' unless $account or $card;
+    my $debits_uri;
+    if ($card) {
+        croak 'The card param must be a hashref' unless ref $card eq 'HASH';
+        $debits_uri = $card->{account}{debits_uri};
+    } elsif ($account) {
+        croak 'The account must be a hashref' unless ref $account eq 'HASH';
+        $debits_uri = $account->{debits_uri};
+    }
+    die 'Could not find a debits_uri' unless $debits_uri;
+    $debit->{source_uri} ||= $card->{uri} if $card->{uri};
+    return $self->post($debits_uri, $debit);
 }
 
 sub get_hold {
@@ -456,6 +476,26 @@ Example response:
     },
   }
 
+=head2 create_debit
+
+    create_debit($debit, account => $account)
+    create_debit($debit, card => $card)
+
+Creates a debit.
+It expects a debit hashref which at least contains an amount field.
+An account or card must be provided.
+
+    my $account = $bp->get_account($account_id);
+    $bp->create_debit ({ account => 250 }, account => $account);
+
+    my $card = bp->get_card($card_id);
+    $bp->create_debit({ amount => 250 }, card => $card);
+
+Successful creation of a debit will return an associated hold as part of the
+response.
+This hold was created and captured behind the scenes automatically.
+See L</get_debit> for an example response.
+
 =head2 get_hold
 
     get_hold($hold_id)
@@ -485,7 +525,6 @@ Example response:
 
 Creates a hold for the given account.
 It expects a hold hashref which at least contains an amount field.
-The amount must be an integer value >= 200.
 
 An account or card must be provided.
 If an account is provided, Balanced defaults to charging the most recently
