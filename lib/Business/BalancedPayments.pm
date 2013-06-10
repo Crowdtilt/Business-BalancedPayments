@@ -66,12 +66,8 @@ sub get_account_by_email {
 sub create_account {
     my ($self, $account, %args) = @_;
     my $card = $args{card};
-    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
-    croak 'The account requires an email_address field'
-        unless $account->{email_address};
-    my $existing_acct = $self->get_account_by_email($account->{email_address});
-    $existing_acct = $existing_acct->{items}[0];
-    return $existing_acct if $existing_acct;
+    $account //= {};
+
     if ($card) {
         croak 'The card param must be a hashref' unless ref $card eq 'HASH';
         croak 'The card is missing a uri' unless $card->{uri};
