@@ -1,5 +1,11 @@
 Revision history for Business::BalancedPayments
  
+0.1000  2013-06-11
+        Can now retrieve resources by uri (in addition to by id).
+
+0.0900  2013-06-10
+        Removed email requirement for creating accounts.
+
 0.0800  2013-05-11
         Added create_debit method.
 
