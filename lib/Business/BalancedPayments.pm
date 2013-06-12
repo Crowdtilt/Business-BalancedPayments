@@ -33,6 +33,12 @@ sub _build_marketplace {
     return $data->{items}[0];
 }
 
+sub _uri {
+    my ($self, $id, $key) = @_;
+    return $id if $id =~ /\//;
+    return $self->marketplace->{$key} . "/$id";
+}
+
 sub get_transactions {
     my ($self) = @_;
     return $self->get($self->marketplaces_uri . "/transactions");
@@ -41,7 +47,7 @@ sub get_transactions {
 sub get_card {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
-    return $self->get($self->marketplace->{cards_uri} . "/$id");
+    return $self->get($self->_uri($id, 'cards_uri'));
 }
 
 sub create_card {
@@ -53,7 +59,7 @@ sub create_card {
 sub get_account {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
-    return $self->get($self->marketplace->{accounts_uri} . "/$id");
+    return $self->get($self->_uri($id, 'accounts_uri'));
 }
 
 sub get_account_by_email {
@@ -140,7 +146,7 @@ sub capture_hold {
 sub get_debit {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
-    return $self->get($self->marketplace->{debits_uri} . "/$id");
+    return $self->get($self->_uri($id, 'debits_uri'));
 }
 
 sub create_debit {
@@ -166,13 +172,13 @@ sub create_debit {
 sub get_hold {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
-    return $self->get($self->marketplace->{holds_uri} . "/$id");
+    return $self->get($self->_uri($id, 'holds_uri'));
 }
 
 sub get_refund {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
-    return $self->get($self->marketplace->{refunds_uri} . "/$id");
+    return $self->get($self->_uri($id, 'refunds_uri'));
 }
 
 sub get_refunds {
@@ -200,7 +206,7 @@ sub refund_debit {
 sub get_bank_account {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
-    return $self->get($self->marketplace->{bank_accounts_uri} . "/$id");
+    return $self->get($self->_uri($id, 'bank_accounts_uri'));
 }
 
 sub create_bank_account {
@@ -228,7 +234,7 @@ sub invalidate_bank_account {
 sub get_credit {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
-    return $self->get($self->marketplace->{credits_uri} . "/$id");
+    return $self->get($self->_uri($id, 'credits_uri'));
 }
 
 sub create_credit {
@@ -282,6 +288,12 @@ This module provides bindings for the
 L<BalancedPayments|https://www.balancedpayments.com> API.
 
 =head1 METHODS
+
+For the C<get_*> methods, the C<$id> param can be the id of the resource or
+a uri. For example, the following two lines are equivalent:
+
+    $bp->get_account('AC7A');
+    $bp->get_account('/v1/marketplaces/MK98/accounts/AC7A');
 
 =head2 new
 
