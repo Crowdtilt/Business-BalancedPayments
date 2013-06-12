@@ -4,7 +4,7 @@ Business::BalancedPayments - BalancedPayments API bindings
 
 # VERSION
 
-version 0.0900
+version 0.1000
 
 # SYNOPSIS
 
@@ -28,6 +28,12 @@ This module provides bindings for the
 [BalancedPayments](https://www.balancedpayments.com) API.
 
 # METHODS
+
+For the `get_*` methods, the `$id` param can be the id of the resource or
+a uri. For example, the following two lines are equivalent:
+
+    $bp->get_account('AC7A');
+    $bp->get_account('/v1/marketplaces/MK98/accounts/AC7A');
 
 ## new
 
@@ -133,12 +139,13 @@ See ["get\_account"](#get\_account) for an example response.
 
 ## create\_account
 
+    create_account()
     create_account($account)
     create_account($account, card => $card)
 
 Creates an account.
-An account hashref is required.
-The account hashref must have an email\_address field:
+An account hashref is optional.
+The account hashref, if passed in, must have an email\_address field:
 
     $bp->create_account({ email_address => 'bob@crowdtilt.com' });
 
