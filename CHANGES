@@ -1,5 +1,8 @@
 Revision history for Business::BalancedPayments
  
+0.1100  2013-10-01
+        Added support for setting the LWP::UserAgent timeout
+
 0.1000  2013-06-11
         Can now retrieve resources by uri (in addition to by id).
 
