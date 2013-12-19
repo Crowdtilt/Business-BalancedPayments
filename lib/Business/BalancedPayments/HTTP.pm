@@ -1,5 +1,5 @@
 package Business::BalancedPayments::HTTP;
-use Moose::Role;
+use Moo::Role;
 
 use HTTP::Request::Common qw(GET POST PUT);
 use JSON qw(from_json to_json);
@@ -9,7 +9,6 @@ has base_url => (
     is      => 'ro',
     default => sub { 'https://api.balancedpayments.com' }
 );
-has timeout => (is => 'ro', default => 10);
 has ua => (
     is      => 'ro',
     lazy    => 1,
@@ -20,7 +19,8 @@ has ua => (
         return $ua;
     },
 );
-has retries => (is => 'ro', default => 0);
+has timeout => (is => 'ro', default => sub { 10 });
+has retries => (is => 'ro', default => sub { 0  });
 
 sub get {
     my ($self, $path) = @_;
@@ -61,7 +61,11 @@ sub _req {
         $self->_log_response($res);
     }
     return undef if $res->code =~ /404|410/;
-    die $res unless $res->is_success;
+    if (not $res->is_success) {
+        Moo::Role->apply_roles_to_object($res,
+            'Business::BalancedPayments::StringableHTTPResponse');
+        die $res;
+    }
     return $res->content ? from_json($res->content) : 1;
 }
 
