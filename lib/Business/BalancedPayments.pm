@@ -1,5 +1,5 @@
 package Business::BalancedPayments;
-use Moose;
+use Moo;
 with 'Business::BalancedPayments::HTTP';
 
 # VERSION

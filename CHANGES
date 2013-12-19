@@ -1,5 +1,9 @@
 Revision history for Business::BalancedPayments
  
+0.1101  2013-12-19
+        Made HTTP::Response exceptions stringable.
+        Replaced Moose with Moo.
+
 0.1100  2013-10-01
         Added support for setting the LWP::UserAgent timeout
 
