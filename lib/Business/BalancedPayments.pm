@@ -11,7 +11,7 @@ has merchant    => (is => 'ro', lazy => 1, builder => '_build_merchant'   );
 has marketplace => (is => 'ro', lazy => 1, builder => '_build_marketplace');
 has logger      => (is => 'ro');
 
-has api_keys_uri     => (is => 'ro', default => sub { '/v1/api_keys'     });
+has customers_uri    => (is => 'ro', default => sub { '/v1/customers'    });
 has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants'    });
 has marketplaces_uri => (is => 'ro', default => sub { '/v1/marketplaces' });
 
@@ -81,6 +81,19 @@ sub create_account {
         $account->{card_uri} = $card->{uri};
     }
     return $self->post($self->marketplace->{accounts_uri}, $account);
+}
+
+sub get_customer {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->_uri($id, 'customers_uri'));
+}
+
+sub create_customer {
+    my ($self, $customer) = @_;
+    $customer ||= {};
+    croak 'The customer param must be a hashref' unless ref $customer eq 'HASH';
+    return $self->post($self->customers_uri, $customer);
 }
 
 sub update_account {
