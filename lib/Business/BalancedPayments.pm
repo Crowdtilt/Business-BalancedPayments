@@ -222,7 +222,7 @@ sub get_bank_account {
     return $self->get($self->_uri($id, 'bank_accounts_uri'));
 }
 
-sub get_bank_account_verification_confirmation {
+sub confirm_bank_verification {
     my ($self, $id, $verification_id) = @_;
     croak 'The id param is missing' unless defined $id;
     croak 'The verification_id param is missing' unless defined $verification_id;
@@ -237,7 +237,7 @@ sub create_bank_account {
     return $self->post($self->marketplace->{bank_accounts_uri}, $bank);
 }
 
-sub create_bank_account_verification {
+sub create_bank_verification {
     my ($self, $id) = @_;
     croak 'The id param is missing' unless defined $id;
     my $uri = $self->_uri($id, 'bank_accounts_uri') . '/verifications';
