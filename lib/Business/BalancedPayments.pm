@@ -222,10 +222,29 @@ sub get_bank_account {
     return $self->get($self->_uri($id, 'bank_accounts_uri'));
 }
 
+sub confirm_bank_verification {
+    my ($self, $id, %args) = @_;
+    my $verification_id = $args{verification_id};
+    croak 'The id param is missing' unless defined $id;
+    croak 'The verification_id param is missing' unless defined $verification_id;
+    my $uri = join '/', $self->_uri($id, 'bank_accounts_uri'),
+        'verifications', $verification_id;
+    my $amount_1 = $args{amount_1} or croak 'The amount_1 param is missing';
+    my $amount_2 = $args{amount_2} or croak 'The amount_2 param is missing';
+    return $self->put($uri => {amount_1 => $amount_1, amount_2 => $amount_2});
+}
+
 sub create_bank_account {
     my ($self, $bank) = @_;
     croak 'The bank account must be a hashref' unless ref $bank eq 'HASH';
     return $self->post($self->marketplace->{bank_accounts_uri}, $bank);
+}
+
+sub create_bank_verification {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    my $uri = $self->_uri($id, 'bank_accounts_uri') . '/verifications';
+    return $self->post($uri => {});
 }
 
 sub update_bank_account {
@@ -356,7 +375,7 @@ Returns the credit card for the given id.
 
 Example response:
 
-    { 
+    {
         account          => { ... },
         brand            => "MasterCard",
         card_type        => "mastercard",
@@ -729,6 +748,27 @@ Example response:
         account     =>  { ... },
     }
 
+=head2 confirm_bank_verification
+
+    confirm_bank_verification($bank_id, verification_id => $verification_id,
+        amount_1 => $x, amount_2 => $y)
+
+Returns the bank account verification status for the given ids.
+
+Example response:
+
+    {
+        _type              => "bank_account_authentication",
+        _uris              => {},
+        attempts           => 0,
+        created_at         => "2014-01-09T03:11:11.080804Z",
+        id                 => "BZ5nDyPcUn2QNkgQn4o62gjM",
+        remaining_attempts => 3,
+        state              => "deposit_succeeded",
+        updated_at         => "2014-01-09T03:11:11.490600Z",
+        uri                => "/v1/bank_accounts/BA5lj/verifications/BZ5nD"
+    }
+
 =head2 create_bank_account
 
     create_bank_account($bank_account)
@@ -745,6 +785,26 @@ A bank account hashref is required:
 Returns a bank account hashref.
 See L</get_bank_account> for an example response.
 
+=head2 create_bank_verification
+
+    create_bank_verification($bank_id)
+
+Returns the bank account verification receipt for the request.
+
+Example response:
+
+    {
+        _type              => "bank_account_authentication",
+        _uris              => {},
+        attempts           => 1,
+        created_at         => "2014-01-09T03:11:20.160110Z",
+        id                 => "BZ5xQsMUtax4itwPTPM2Ducu",
+        remaining_attempts => 2,
+        state              => "verified",
+        updated_at         => "2014-01-09T03:11:21.482255Z",
+        uri                => "/v1/bank_accounts/BA5vJy/verifications/BZ5xQs"
+    }
+
 =head2 add_bank_account
 
     add_bank_account($bank_account, account => $account)
@@ -753,7 +813,7 @@ Adds a bank account to an account.
 It expects a bank account hashref and an account hashref:
 
     my $account = $bp->get_account($account_id);
-    $bp->add_bank_accounti(
+    $bp->add_bank_account(
         {
             name           => "WHC III Checking",
             account_number => "12341234",
