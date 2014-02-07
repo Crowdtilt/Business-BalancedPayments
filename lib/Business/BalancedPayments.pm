@@ -223,7 +223,8 @@ sub get_bank_account {
 }
 
 sub confirm_bank_verification {
-    my ($self, $id, $verification_id) = @_;
+    my ($self, $id, %args) = @_;
+    my $verification_id = $args{verification_id};
     croak 'The id param is missing' unless defined $id;
     croak 'The verification_id param is missing' unless defined $verification_id;
     my $uri = join '/', $self->_uri($id, 'bank_accounts_uri'),
@@ -745,9 +746,9 @@ Example response:
         account     =>  { ... },
     }
 
-=head2 get_bank_account_verification_confirmation
+=head2 confirm_bank_verification
 
-    get_bank_account_verification_confirmation($bank_id, $verification_id)
+    confirm_bank_verification($bank_id, verification_id => $verification_id)
 
 Returns the bank account verification status for the given ids.
 
@@ -781,9 +782,9 @@ A bank account hashref is required:
 Returns a bank account hashref.
 See L</get_bank_account> for an example response.
 
-=head2 create_bank_account_verification
+=head2 create_bank_verification
 
-    create_bank_account_verification($bank_id)
+    create_bank_verification($bank_id)
 
 Returns the bank account verification receipt for the request.
 
