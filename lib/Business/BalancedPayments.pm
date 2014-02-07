@@ -229,7 +229,7 @@ sub confirm_bank_verification {
     croak 'The verification_id param is missing' unless defined $verification_id;
     my $uri = join '/', $self->_uri($id, 'bank_accounts_uri'),
         'verifications', $verification_id;
-    return $self->put($uri => {qw(amount_1 1 amount_2 2)});
+    return $self->put($uri => {qw(amount_1 1 amount_2 1)});
 }
 
 sub create_bank_account {
