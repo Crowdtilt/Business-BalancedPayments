@@ -229,7 +229,9 @@ sub confirm_bank_verification {
     croak 'The verification_id param is missing' unless defined $verification_id;
     my $uri = join '/', $self->_uri($id, 'bank_accounts_uri'),
         'verifications', $verification_id;
-    return $self->put($uri => {qw(amount_1 1 amount_2 1)});
+    my $amount_1 = $args{amount_1} or croak 'The amount_1 param is missing';
+    my $amount_2 = $args{amount_2} or croak 'The amount_2 param is missing';
+    return $self->put($uri => {amount_1 => $amount_1, amount_2 => $amount_2});
 }
 
 sub create_bank_account {
@@ -748,7 +750,8 @@ Example response:
 
 =head2 confirm_bank_verification
 
-    confirm_bank_verification($bank_id, verification_id => $verification_id)
+    confirm_bank_verification($bank_id, verification_id => $verification_id,
+        amount_1 => $x, amount_2 => $y)
 
 Returns the bank account verification status for the given ids.
 
