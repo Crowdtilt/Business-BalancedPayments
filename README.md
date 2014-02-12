@@ -4,7 +4,7 @@ Business::BalancedPayments - BalancedPayments API bindings
 
 # VERSION
 
-version 0.1201
+version 0.1300
 
 # SYNOPSIS
 
@@ -56,7 +56,7 @@ Parameters:
     A logger-like object.
     It just needs to have a method named `DEBUG` that takes a single argument,
     the message to be logged.
-    A [Log::Tiny](https://metacpan.org/pod/Log::Tiny) object would be a good choice.
+    A [Log::Tiny](http://search.cpan.org/perldoc?Log::Tiny) object would be a good choice.
 
 - retries
 
@@ -79,7 +79,7 @@ Returns the credit card for the given id.
 
 Example response:
 
-    { 
+    {
         account          => { ... },
         brand            => "MasterCard",
         card_type        => "mastercard",
@@ -103,7 +103,7 @@ Example response:
     })
 
 Creates a credit card.
-See ["get_card"](#get_card) for an example response.
+See ["get\_card"](#get\_card) for an example response.
 
 ## get\_account
 
@@ -135,7 +135,7 @@ Example response:
     get_account_by_email($email)
 
 Returns the account for the given email address.
-See ["get_account"](#get_account) for an example response.
+See ["get\_account"](#get\_account) for an example response.
 
 ## create\_account
 
@@ -152,7 +152,7 @@ The account hashref, if passed in, must have an email\_address field:
 It is possible to create an account and associate it with a credit card at the
 same time.
 You can do this in 2 ways.
-You can provide a card such as one returned by calling ["get_card"](#get_card):
+You can provide a card such as one returned by calling ["get\_card"](#get\_card):
 
     my $card = $bp->get_card($card_id);
     $bp->create_account({ email_address => 'bob@crowdtilt.com' }, card => $card)
@@ -166,14 +166,14 @@ Alternatively, you can provide a card\_uri inside the account hashref:
     });
 
 Returns an account hashref.
-See ["get_account"](#get_account) for an example response.
+See ["get\_account"](#get\_account) for an example response.
 
 ## update\_account
 
     update_account($account)
 
 Updates an account.
-It expects an account hashref, such as one returned by ["get_account"](#get_account).
+It expects an account hashref, such as one returned by ["get\_account"](#get\_account).
 The account hashref must contain a uri or id field.
 
 ## add\_card
@@ -181,11 +181,11 @@ The account hashref must contain a uri or id field.
     add_card($card, account => $account)
 
 Adds a card to an account.
-It expects a card hashref, such as one returned by ["get_card"](#get_card),
-and an account hashref, such as one returned by ["get_account"](#get_account).
+It expects a card hashref, such as one returned by ["get\_card"](#get\_card),
+and an account hashref, such as one returned by ["get\_account"](#get\_account).
 
 Returns an account hashref.
-See ["get_account"](#get_account) for an example response.
+See ["get\_account"](#get\_account) for an example response.
 
 ## get\_debit
 
@@ -240,7 +240,7 @@ An account or card must be provided.
 Successful creation of a debit will return an associated hold as part of the
 response.
 This hold was created and captured behind the scenes automatically.
-See ["get_debit"](#get_debit) for an example response.
+See ["get\_debit"](#get\_debit) for an example response.
 
 ## get\_hold
 
@@ -284,7 +284,7 @@ You can pass in a card if you want to charge a specific card:
     my $card = bp->get_card($card_id);
     $bp->create_hold({ amount => 250 }, card => $card);
 
-See ["get_hold"](#get_hold) for an example response.
+See ["get\_hold"](#get\_hold) for an example response.
 
 ## capture\_hold
 
@@ -400,7 +400,7 @@ Voids a hold.
     $bp->void_hold($hold);
 
 Returns a hold hashref.
-See ["get_hold"](#get_hold) for an example response.
+See ["get\_hold"](#get\_hold) for an example response.
 
 ## refund\_debit
 
@@ -452,6 +452,27 @@ Example response:
         account     =>  { ... },
     }
 
+## confirm\_bank\_verification
+
+    confirm_bank_verification($bank_id, verification_id => $verification_id,
+        amount_1 => $x, amount_2 => $y)
+
+Returns the bank account verification status for the given ids.
+
+Example response:
+
+    {
+        _type              => "bank_account_authentication",
+        _uris              => {},
+        attempts           => 0,
+        created_at         => "2014-01-09T03:11:11.080804Z",
+        id                 => "BZ5nDyPcUn2QNkgQn4o62gjM",
+        remaining_attempts => 3,
+        state              => "deposit_succeeded",
+        updated_at         => "2014-01-09T03:11:11.490600Z",
+        uri                => "/v1/bank_accounts/BA5lj/verifications/BZ5nD"
+    }
+
 ## create\_bank\_account
 
     create_bank_account($bank_account)
@@ -466,7 +487,27 @@ A bank account hashref is required:
     });
 
 Returns a bank account hashref.
-See ["get_bank_account"](#get_bank_account) for an example response.
+See ["get\_bank\_account"](#get\_bank\_account) for an example response.
+
+## create\_bank\_verification
+
+    create_bank_verification($bank_id)
+
+Returns the bank account verification receipt for the request.
+
+Example response:
+
+    {
+        _type              => "bank_account_authentication",
+        _uris              => {},
+        attempts           => 1,
+        created_at         => "2014-01-09T03:11:20.160110Z",
+        id                 => "BZ5xQsMUtax4itwPTPM2Ducu",
+        remaining_attempts => 2,
+        state              => "verified",
+        updated_at         => "2014-01-09T03:11:21.482255Z",
+        uri                => "/v1/bank_accounts/BA5vJy/verifications/BZ5xQs"
+    }
 
 ## add\_bank\_account
 
@@ -476,7 +517,7 @@ Adds a bank account to an account.
 It expects a bank account hashref and an account hashref:
 
     my $account = $bp->get_account($account_id);
-    $bp->add_bank_accounti(
+    $bp->add_bank_account(
         {
             name           => "WHC III Checking",
             account_number => "12341234",
@@ -488,7 +529,7 @@ It expects a bank account hashref and an account hashref:
 This operation implicitly adds the "merchant" role to the account.
 
 Returns a bank account hashref.
-See ["get_bank_account"](#get_bank_account) for an example response.
+See ["get\_bank\_account"](#get\_bank\_account) for an example response.
 
 ## update\_bank\_account
 
@@ -508,7 +549,7 @@ Once a bank account has been invalidated it cannot be re-activated.
     });
 
 Returns a bank account hashref.
-See ["get_bank_account"](#get_bank_account) for an example response.
+See ["get\_bank\_account"](#get\_bank\_account) for an example response.
 
 ## invalidate\_bank\_account
 
@@ -521,7 +562,7 @@ This is a convenience method that does the equivalent of:
     update_bank_account({ id => $bank_id, is_valid => 0 });
 
 Returns a bank account hashref.
-See ["get_bank_account"](#get_bank_account) for an example response.
+See ["get\_bank\_account"](#get\_bank\_account) for an example response.
 
 ## get\_credit
 
@@ -579,9 +620,10 @@ Example response:
 
 # AUTHORS
 
-- Khaled Hussein <khaled.hussein@gmail.com>
-- Naveed Massjouni <naveedm9@gmail.com>
-- Will Wolf<throughnothing@gmail.com>
+- Al Newkirk <al@crowdtilt.com>
+- Khaled Hussein <khaled@crowdtilt.com>
+- Naveed Massjouni <naveed@crowdtilt.com>
+- Will Wolf <will@crowdtilt.com>
 
 # COPYRIGHT AND LICENSE
 
