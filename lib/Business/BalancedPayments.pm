@@ -8,7 +8,7 @@ use Carp qw(croak);
 
 has secret      => (is => 'ro', required => 1                             );
 has merchant    => (is => 'ro', lazy => 1, builder => '_build_merchant'   );
-has marketplace => (is => 'ro', lazy => 1, builder => '_build_marketplace');
+has marketplace => (is => 'rw', lazy => 1, builder => '_build_marketplace');
 has logger      => (is => 'ro');
 
 has customers_uri    => (is => 'ro', default => sub { '/v1/customers'    });
