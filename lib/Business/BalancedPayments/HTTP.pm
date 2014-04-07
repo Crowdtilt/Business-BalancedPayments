@@ -9,6 +9,12 @@ has base_url => (
     is      => 'ro',
     default => sub { 'https://api.balancedpayments.com' }
 );
+has headers_v1_1 => (
+    is      => 'rw',
+    default => sub {
+        { accept       => 'application/vnd.api+json;revision=1.1' }
+    },
+);
 has ua => (
     is      => 'ro',
     lazy    => 1,
@@ -32,13 +38,18 @@ sub post {
     return $self->_req(POST $path, content => encode_json $params);
 }
 
+sub post_v1_1 {
+    my ($self, $path, $params) = @_;
+    return $self->_req_v1_1(POST $path, content => encode_json $params);
+}
+
 sub put {
     my ($self, $path, $params) = @_;
     return $self->_req(PUT $path, content => encode_json $params);
 }
 
 # Prefix the path param of the http methods with the base_url
-around qw(get post put) => sub {
+around qw(get post post_v1_1 put) => sub {
     my $orig = shift;
     my $self = shift;
     my $path = shift;
@@ -67,6 +78,12 @@ sub _req {
         die $res;
     }
     return $res->content ? decode_json($res->content) : 1;
+}
+
+sub _req_v1_1 {
+    my ($self, $req) = @_;
+    $req->header( %{ $self->headers_v1_1 } );
+    return $self->_req( $req );
 }
 
 sub _url {
