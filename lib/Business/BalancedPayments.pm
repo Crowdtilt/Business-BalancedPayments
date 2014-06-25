@@ -50,6 +50,12 @@ sub get_card {
     return $self->get($self->_uri($id, 'cards_uri'));
 }
 
+sub get_card_v1_1 {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get_v1_1($self->_uri($id, 'cards_uri'));
+}
+
 sub create_card {
     my ($self, $card) = @_;
     croak 'The card param must be a hashref' unless ref $card eq 'HASH';

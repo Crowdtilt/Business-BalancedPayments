@@ -33,6 +33,11 @@ sub get {
     return $self->_req(GET $path);
 }
 
+sub get_v1_1 {
+    my ($self, $path) = @_;
+    return $self->_req_v1_1(GET $path);
+}
+
 sub post {
     my ($self, $path, $params) = @_;
     return $self->_req(POST $path, content => encode_json $params);
@@ -49,7 +54,7 @@ sub put {
 }
 
 # Prefix the path param of the http methods with the base_url
-around qw(get post post_v1_1 put) => sub {
+around qw(get get_v1_1 post post_v1_1 put) => sub {
     my $orig = shift;
     my $self = shift;
     my $path = shift;
