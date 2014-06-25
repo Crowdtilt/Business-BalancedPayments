@@ -1,5 +1,8 @@
 Revision history for Business::BalancedPayments
  
+0.1501  2014-06-25
+        Added version to Business::BalancedPayments::HTTP
+
 0.1500  2014-06-25
         Added v1.1 get_card support
 

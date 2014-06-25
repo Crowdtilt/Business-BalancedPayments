@@ -1,6 +1,8 @@
 package Business::BalancedPayments::HTTP;
 use Moo::Role;
 
+# VERSION
+
 use HTTP::Request::Common qw(GET POST PUT);
 use JSON qw(decode_json encode_json);
 use LWP::UserAgent;
