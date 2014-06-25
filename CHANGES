@@ -1,5 +1,8 @@
 Revision history for Business::BalancedPayments
  
+0.1500  2014-06-25
+        Added v1.1 get_card support
+
 0.1300  2014-02-12
         Added confirm_bank_verification and create_bank_verification.
 
