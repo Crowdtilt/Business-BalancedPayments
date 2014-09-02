@@ -340,6 +340,34 @@ sub create_check_recipient_credit {
     return $res->{credits}[0];
 }
 
+sub get_external_account {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless $id;
+    my $res = $self->get_v1_1("/external_accounts/$id");
+    _die_version_error() unless $res;
+    return $res->{external_accounts}[0];
+}
+
+sub create_external_account {
+    my ($self, $provider, $token, %args) = @_;
+    croak 'The provider param is missing' unless $provider;
+    croak 'The token param is missing' unless $token;
+    my $res = $self->post_v1_1('/external_accounts', {
+        provider => $provider, token => $token, %args });
+    _die_version_error() unless $res;
+    return $res->{external_accounts}[0];
+}
+
+sub debit_external_account {
+    my ($self, $ext_acct, $amount, %args) = @_;
+    croak 'The external_account is missing' unless ref $ext_acct eq 'HASH';
+    croak 'The external_account param is missing and id' unless $ext_acct->{id};
+    croak 'The amount param is missing' unless $amount;
+    return $self->post_v1_1("/external_accounts/$ext_acct->{id}/debits",
+        { amount => $amount, %args });
+}
+
+
 sub _die_version_error {
     die "Error making check_recipients call. " .
         "Check that you are using a suitable API Version";
