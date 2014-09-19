@@ -1,19 +1,26 @@
 package Business::BalancedPayments;
 use Moo;
-with 'Business::BalancedPayments::HTTP';
+with 'WebService::BaseClientRole';
 
 # VERSION
 
 use Carp qw(croak);
+use HTTP::Request::Common qw(GET POST);
+use JSON qw(encode_json);
 
+has '+base_url' => (default => sub { 'https://api.balancedpayments.com' } );
 has secret      => (is => 'ro', required => 1                             );
 has merchant    => (is => 'ro', lazy => 1, builder => '_build_merchant'   );
 has marketplace => (is => 'ro', lazy => 1, builder => '_build_marketplace');
-has logger      => (is => 'ro');
 
 has customers_uri    => (is => 'ro', default => sub { '/v1/customers'    });
 has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants'    });
 has marketplaces_uri => (is => 'ro', default => sub { '/v1/marketplaces' });
+
+has headers_v1_1 => (
+    is      => 'rw',
+    default => sub { +{ accept => 'application/vnd.api+json;revision=1.1' } },
+);
 
 sub log {
     my ($self, $msg) = @_;
@@ -345,6 +352,29 @@ sub _die_version_error {
         "Check that you are using a suitable API Version";
 }
 
+sub _req_v1_1 {
+    my ($self, $req) = @_;
+    $req->header( %{ $self->headers_v1_1 } );
+    return $self->_req( $req );
+}
+
+sub get_v1_1 {
+    my ($self, $path) = @_;
+    $path = $self->_url($path);
+    return $self->_req_v1_1(GET $path);
+}
+
+sub post_v1_1 {
+    my ($self, $path, $params) = @_;
+    $path = $self->_url($path);
+    return $self->_req_v1_1(POST $path, content => encode_json $params);
+}
+
+around req => sub {
+    my ($orig, $self, $req, @rest) = @_;
+    $req->authorization_basic($self->secret);
+    return $self->$orig($req, @rest);
+};
 
 # ABSTRACT: BalancedPayments API bindings
 
