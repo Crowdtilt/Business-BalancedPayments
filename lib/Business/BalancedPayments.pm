@@ -1,380 +1,84 @@
 package Business::BalancedPayments;
 use Moo;
-with 'WebService::BaseClientRole';
 
 # VERSION
 
+use Business::BalancedPayments::V10;
+use Business::BalancedPayments::V11;
 use Carp qw(croak);
 use HTTP::Request::Common qw(GET POST);
 use JSON qw(encode_json);
 
-has '+base_url' => (default => sub { 'https://api.balancedpayments.com' } );
-has secret      => (is => 'ro', required => 1                             );
-has merchant    => (is => 'ro', lazy => 1, builder => '_build_merchant'   );
-has marketplace => (is => 'ro', lazy => 1, builder => '_build_marketplace');
-
-has customers_uri    => (is => 'ro', default => sub { '/v1/customers'    });
-has merchants_uri    => (is => 'ro', default => sub { '/v1/merchants'    });
-has marketplaces_uri => (is => 'ro', default => sub { '/v1/marketplaces' });
-
-has headers_v1_1 => (
-    is      => 'rw',
-    default => sub { +{ accept => 'application/vnd.api+json;revision=1.1' } },
+has secret   => (is => 'ro', required => 1);
+has base_url => (is => 'ro', default => 'https://api.balancedpayments.com');
+has logger   => (is => 'ro');
+has retries  => (is => 'ro');
+has ua       => (is => 'ro');
+has version  => (
+    is      => 'ro',
+    default => '1.0',
+    isa => sub {
+        my $version = shift;
+        croak "Only versions 1.0 and 1.1 are supported"
+            unless $version and ($version == 1 or $version == 1.1);
+    },
 );
 
-sub log {
-    my ($self, $msg) = @_;
-    return unless $self->logger;
-    $self->logger->DEBUG("BP: $msg");
-}
+has _base => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        my %args = (
+            secret   => $self->secret,
+            base_url => $self->base_url,
+            $self->logger  ? (logger  => $self->logger ) : (),
+            $self->retries ? (retries => $self->retries) : (),
+            $self->ua      ? (ua      => $self->ua     ) : (),
+        );
+        return $self->version == 1.1
+            ? Business::BalancedPayments::V11->new(%args)
+            : Business::BalancedPayments::V10->new(%args);
+    },
+    handles => [qw(
+        add_bank_account
+        add_card
+        capture_hold
+        confirm_bank_verification
+        create_account
+        create_bank_account
+        create_bank_verification
+        create_card
+        create_check_recipient
+        create_check_recipient_credit
+        create_credit
+        create_customer
+        create_debit
+        create_hold
+        get_account
+        get_account_by_email
+        get_bank_account
+        get_card
+        get_credit
+        get_customer
+        get_debit
+        get_hold
+        get_refund
+        get_refunds
+        get_transactions
+        invalidate_bank_account
+        marketplace
+        refund_debit
+        update_account
+        update_bank_account
+        void_hold
 
-sub _build_merchant {
-    my ($self) = @_;
-    my $data = $self->get($self->merchants_uri);
-    return $data->{items}[0];
-}
-
-sub _build_marketplace {
-    my ($self) = @_;
-    my $data = $self->get($self->marketplaces_uri);
-    return $data->{items}[0];
-}
-
-sub _uri {
-    my ($self, $id, $key) = @_;
-    return $id if $id =~ /\//;
-    return $self->marketplace->{$key} . "/$id";
-}
-
-sub get_transactions {
-    my ($self) = @_;
-    return $self->get($self->marketplaces_uri . "/transactions");
-}
-
-sub get_card {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri($id, 'cards_uri'));
-}
-
-sub get_card_v1_1 {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get_v1_1($self->_uri($id, 'cards_uri'));
-}
-
-sub create_card {
-    my ($self, $card) = @_;
-    croak 'The card param must be a hashref' unless ref $card eq 'HASH';
-    return $self->post($self->marketplace->{cards_uri}, $card);
-}
-
-sub get_account {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri($id, 'accounts_uri'));
-}
-
-sub get_account_by_email {
-    my ($self, $email) = @_;
-    croak 'The email param is missing' unless $email;
-    return $self->get(
-        $self->marketplace->{accounts_uri} . "?email_address=$email");
-}
-
-sub create_account {
-    my ($self, $account, %args) = @_;
-    my $card = $args{card};
-    $account ||= {};
-    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
-
-    if ($card) {
-        croak 'The card param must be a hashref' unless ref $card eq 'HASH';
-        croak 'The card is missing a uri' unless $card->{uri};
-        $account->{card_uri} = $card->{uri};
-    }
-    return $self->post($self->marketplace->{accounts_uri}, $account);
-}
-
-sub get_customer {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri($id, 'customers_uri'));
-}
-
-sub create_customer {
-    my ($self, $customer) = @_;
-    $customer ||= {};
-    croak 'The customer param must be a hashref' unless ref $customer eq 'HASH';
-    return $self->post($self->customers_uri, $customer);
-}
-
-sub update_account {
-    my ($self, $account) = @_;
-    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
-    croak 'The account must have an id or uri field'
-        unless $account->{uri} || $account->{id};
-    my $account_uri = $account->{uri}
-        || join '/', $self->marketplace->{uri}, 'accounts', $account->{id};
-    return $self->put($account_uri, $account);
-}
-
-sub add_card {
-    my ($self, $card, %args) = @_;
-    my $account = $args{account};
-    croak 'The card param must be a hashref' unless ref $card eq 'HASH';
-    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
-    croak 'The account requires a cards_uri field' unless $account->{cards_uri};
-    return $self->post($account->{cards_uri}, $card);
-}
-
-sub add_bank_account {
-    my ($self, $bank_account, %args) = @_;
-    my $account = $args{account};
-    croak 'The bank_account param must be a hashref'
-        unless ref $bank_account eq 'HASH';
-    croak 'The account param must be a hashref' unless ref $account eq 'HASH';
-    croak 'The bank_accounts_uri field is missing from the account object'
-        unless $account->{bank_accounts_uri};
-    return $self->post($account->{bank_accounts_uri}, $bank_account);
-}
-
-sub create_hold {
-    my ($self, $hold, %args) = @_;
-    croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
-    croak 'The hold is missing an amount field' unless $hold->{amount};
-    my $card = $args{card};
-    my $account = $args{account};
-    croak 'An account or card must be provided' unless $account or $card;
-    my $holds_uri;
-    if ($card) {
-        croak 'The card param must be a hashref' unless ref $card eq 'HASH';
-        $holds_uri = $card->{account}{holds_uri};
-    } elsif ($account) {
-        croak 'The account must be a hashref' unless ref $account eq 'HASH';
-        $holds_uri = $account->{holds_uri};
-    }
-    die 'Could not find a holds_uri' unless $holds_uri;
-    $hold->{source_uri} ||= $card->{uri} if $card->{uri};
-    return $self->post($holds_uri, $hold);
-}
-
-sub capture_hold {
-    my ($self, $hold, $params) = @_;
-    croak 'The hold param is missing' unless $hold;
-    croak 'The optional extra params must be a hashref'
-        if $params and ref $params ne 'HASH';
-    my $hold_uri = ref $hold eq 'HASH' ? $hold->{uri} : $hold;
-    my $data = { hold_uri => $hold_uri, %$params };
-    return $self->post($self->marketplace->{debits_uri}, $data);
-}
-
-sub get_debit {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri($id, 'debits_uri'));
-}
-
-sub create_debit {
-    my ($self, $debit, %args) = @_;
-    croak 'The debit param must be a hashref' unless ref $debit eq 'HASH';
-    croak 'No amount found' unless $debit->{amount};
-    my $card = $args{card};
-    my $account = $args{account};
-    croak 'An account or card must be provided' unless $account or $card;
-    my $debits_uri;
-    if ($card) {
-        croak 'The card param must be a hashref' unless ref $card eq 'HASH';
-        $debits_uri = $card->{account}{debits_uri};
-    } elsif ($account) {
-        croak 'The account must be a hashref' unless ref $account eq 'HASH';
-        $debits_uri = $account->{debits_uri};
-    }
-    die 'Could not find a debits_uri' unless $debits_uri;
-    $debit->{source_uri} ||= $card->{uri} if $card->{uri};
-    return $self->post($debits_uri, $debit);
-}
-
-sub get_hold {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri($id, 'holds_uri'));
-}
-
-sub get_refund {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri($id, 'refunds_uri'));
-}
-
-sub get_refunds {
-    my ($self, $debit) = @_;
-    croak 'The debit param is missing' unless defined $debit;
-    return $self->get($debit->{refunds_uri});
-}
-
-sub void_hold {
-    my ($self, $hold) = @_;
-    croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
-    croak 'No hold uri found' unless $hold->{uri};
-    return $self->put($hold->{uri}, { is_void => 'True' });
-}
-
-sub refund_debit {
-    my ($self, $debit) = @_;
-    croak 'The debit param must be a hashref' unless ref $debit eq 'HASH';
-    croak 'No amount found' unless $debit->{amount};
-    croak 'No debit uri found' unless $debit->{uri} || $debit->{debit_uri};
-    $debit->{debit_uri} ||= $debit->{uri};
-    return $self->post($self->marketplace->{refunds_uri}, $debit);
-}
-
-sub get_bank_account {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri($id, 'bank_accounts_uri'));
-}
-
-sub confirm_bank_verification {
-    my ($self, $id, %args) = @_;
-    my $verification_id = $args{verification_id};
-    croak 'The id param is missing' unless defined $id;
-    croak 'The verification_id param is missing' unless defined $verification_id;
-    my $uri = join '/', $self->_uri($id, 'bank_accounts_uri'),
-        'verifications', $verification_id;
-    my $amount_1 = $args{amount_1} or croak 'The amount_1 param is missing';
-    my $amount_2 = $args{amount_2} or croak 'The amount_2 param is missing';
-    return $self->put($uri => {amount_1 => $amount_1, amount_2 => $amount_2});
-}
-
-sub create_bank_account {
-    my ($self, $bank) = @_;
-    croak 'The bank account must be a hashref' unless ref $bank eq 'HASH';
-    return $self->post($self->marketplace->{bank_accounts_uri}, $bank);
-}
-
-sub create_bank_verification {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    my $uri = $self->_uri($id, 'bank_accounts_uri') . '/verifications';
-    return $self->post($uri => {});
-}
-
-sub update_bank_account {
-    my ($self, $bank) = @_;
-    croak 'The bank account must be a hashref' unless ref $bank eq 'HASH';
-    croak 'The bank account must have an id or uri field'
-        unless $bank->{uri} || $bank->{id};
-    my $bank_uri = $bank->{uri}
-        || join '/', $self->marketplace->{uri}, 'bank_accounts', $bank->{id};
-    return $self->put($bank_uri, $bank);
-}
-
-sub invalidate_bank_account {
-    my ($self, $bank_id) = @_;
-    croak 'A bank id is required' unless defined $bank_id;
-    return $self->update_bank_account({ id => $bank_id, is_valid => 0 });
-}
-
-sub get_credit {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri($id, 'credits_uri'));
-}
-
-sub create_credit {
-    my ($self, $credit, %args) = @_;
-    my $account = $args{account};
-    my $bank_account = $args{bank_account};
-    croak 'The credit param must be a hashref' unless ref $credit eq 'HASH';
-    croak 'The credit must contain an amount' unless exists $credit->{amount};
-    croak 'An account or bank_account param is required'
-        unless $account or $bank_account;
-    my $credits_uri;
-    if ($account) {
-        croak 'The account param must be a hashref'
-            unless ref $account eq 'HASH';
-        $credits_uri = $account->{credits_uri};
-    }
-    if ($bank_account) {
-        croak 'The bank_account param must be a hashref'
-            unless ref $bank_account eq 'HASH';
-        croak 'The bank_account is a uri' unless $bank_account->{uri};
-        croak 'The bank_account is missing an credits_uri'
-            unless $bank_account->{account}{credits_uri};
-        $credits_uri = $bank_account->{account}{credits_uri};
-        $credit->{bank_account_uri} = $bank_account->{uri};
-    }
-    croak 'No credits_uri found' unless $credits_uri;
-    return $self->post($credits_uri, $credit);
-}
-
-sub create_check_recipient {
-    my ($self, %params) = @_;
-    my $name        = $params{name};
-    my $address1    = $params{address1};
-    my $address2    = $params{address2};
-    my $postal_code = $params{postal_code};
-    croak "The name param is required" unless $name;
-    croak "The address1 param is required" unless $address1;
-    croak "The postal_code param is required" unless $postal_code;
-
-    my $res = $self->post_v1_1('/check_recipients', {
-        name => $name,
-        address => {
-            line1 => $address1,
-            line2 => $address2,
-            postal_code => $postal_code,
-        },
-    }, 'v1_1');
-    _die_version_error() unless $res;
-    return $res->{check_recipients}[0];
-}
-
-sub create_check_recipient_credit {
-    my ($self, $credit, %args) = @_;
-    my $check_recipient = $args{check_recipient};
-    croak 'The check_recipient param must be a hashref'
-        unless ref $check_recipient eq 'HASH';
-    croak 'The check_recipient hashref needs an id'
-        unless $check_recipient->{id};
-    croak 'The credit param must be a hashref' unless ref $credit eq 'HASH';
-    croak 'The credit must contain an amount' unless exists $credit->{amount};
-
-    my $res = $self->post_v1_1(
-        "/check_recipients/$check_recipient->{id}/credits", $credit, 'v1_1');
-    _die_version_error() unless $res;
-    return $res->{credits}[0];
-}
-
-sub _die_version_error {
-    die "Error making check_recipients call. " .
-        "Check that you are using a suitable API Version";
-}
-
-sub _req_v1_1 {
-    my ($self, $req) = @_;
-    $req->header( %{ $self->headers_v1_1 } );
-    return $self->req( $req );
-}
-
-sub get_v1_1 {
-    my ($self, $path) = @_;
-    $path = $self->_url($path);
-    return $self->_req_v1_1(GET $path);
-}
-
-sub post_v1_1 {
-    my ($self, $path, $params) = @_;
-    $path = $self->_url($path);
-    return $self->_req_v1_1(POST $path, content => encode_json $params);
-}
-
-around req => sub {
-    my ($orig, $self, $req, @rest) = @_;
-    $req->authorization_basic($self->secret);
-    return $self->$orig($req, @rest);
-};
+        get
+        post
+        put
+        delete
+    )],
+);
 
 # ABSTRACT: BalancedPayments API bindings
 
@@ -386,7 +90,7 @@ around req => sub {
     my $bp = Business::BalancedPayments->new(secret => $secret);
 
     my $card = $bp->create_card({
-        card_number      => "5105105105105100",
+        card_number      => '5105105105105100',
         expiration_month => 12,
         expiration_year  => 2020,
         security_code    => 123,
@@ -411,6 +115,7 @@ a uri. For example, the following two lines are equivalent:
 
     my $bp = Business::BalancedPayments->new(
         secret  => $secret,
+        version => '1.1',   # optional, defaults to 1.0
         logger  => $logger, # optional
         retries => 3,       # optional
     );
@@ -424,22 +129,83 @@ Parameters:
 
 Required. The Balanced Payments secret key for your account.
 
-=item logger
+=item version
 
-Optional.
-A logger-like object.
-It just needs to have a method named C<DEBUG> that takes a single argument,
-the message to be logged.
-A L<Log::Tiny> object would be a good choice.
-
-=item retries
-
-Optional.
-The number of times to retry requests in cases when Balanced returns a 5xx
-response.
-Defaults to 0.
+Optional. Defaults to C<'1.0'>.
+The only supported versions currently are C<'1.0'> and C<'1.1'>.
 
 =back
+
+See L<WebService::BaseClientRole> for other supported constructor parameters
+such as C<logger>, C<retries>, and C<timeout>.
+
+=head1 METHODS V1.1
+
+=head2 get_card
+
+    get_card($id)
+
+Returns the credit card for the given id.
+
+Example response:
+
+    {
+      'cards' => [
+        {
+          'id' => 'CC6J',
+          'href' => '/cards/CC6J',
+          'address' => {
+            'city' => undef,
+            'country_code' => undef,
+            'line1' => undef,
+            'line2' => undef,
+            'postal_code' => undef,
+            'state' => undef
+          },
+          'avs_postal_match' => undef,
+          'avs_result' => undef,
+          'avs_street_match' => undef,
+          'bank_name' => 'BANK OF HAWAII',
+          'brand' => 'MasterCard',
+          'can_credit' => 0,
+          'can_debit' => 1,
+          'category' => 'other',
+          'created_at' => '2014-09-21T05:55:17.564617Z',
+          'cvv' => undef,
+          'cvv_match' => undef,
+          'cvv_result' => undef,
+          'expiration_month' => 12,
+          'expiration_year' => 2020,
+          'fingerprint' => 'fc4c',
+          'is_verified' => $VAR1->{'cards'}[0]{'can_debit'},
+          'links' => { 'customer' => undef },
+          'meta' => {},
+          'name' => undef,
+          'number' => 'xxxxxxxxxxxx5100',
+          'type' => 'credit',
+          'updated_at' => '2014-09-21T05:55:17.564619Z'
+        }
+      ],
+      'links' => {
+        'cards.card_holds' => '/cards/{cards.id}/card_holds',
+        'cards.customer' => '/customers/{cards.customer}',
+        'cards.debits' => '/cards/{cards.id}/debits',
+        'cards.disputes' => '/cards/{cards.id}/disputes'
+      }
+    }
+
+=head2 create_card
+
+Creates a credit card.
+See C<get_card> for an example response.
+
+    create_card({
+        number           => '5105105105105100',
+        expiration_month => 12,
+        expiration_year  => 2020,
+    })
+
+=head1 METHODS V1.0
 
 =head2 get_transactions
 
@@ -472,14 +238,58 @@ Example response:
 =head2 create_card
 
     create_card({
-        card_number      => "5105105105105100",
+        card_number      => '5105105105105100',
         expiration_month => 12,
         expiration_year  => 2020,
         security_code    => 123,
     })
 
 Creates a credit card.
-See L</get_card> for an example response.
+See C<get_card> for an example response.
+
+=head2 get_customer
+
+    get_customer($id)
+
+Returns the customer for the given id.
+
+Example response:
+
+    {
+      address              => {},
+      bank_accounts_uri    => "/v1/customers/CU4I/bank_accounts",
+      business_name        => undef,
+      cards_uri            => "/v1/customers/CU4I/cards",
+      created_at           => "2014-09-21T06:14:54.996408Z",
+      credits_uri          => "/v1/customers/CU4I/credits",
+      debits_uri           => "/v1/customers/CU4I/debits",
+      destination          => undef,
+      dob                  => undef,
+      ein                  => undef,
+      email                => 'bob@foo.com',
+      facebook             => undef,
+      holds_uri            => "/v1/customers/CU4I/holds",
+      id                   => "CU4I",
+      is_identity_verified => bless(do{\(my $o = 0)}, "JSON::XS::Boolean"),
+      meta                 => {},
+      name                 => "Bob",
+      phone                => undef,
+      refunds_uri          => "/v1/customers/CU4I/refunds",
+      reversals_uri        => "/v1/customers/CU4I/reversals",
+      source               => undef,
+      ssn_last4            => undef,
+      transactions_uri     => "/v1/customers/CU4I/transactions",
+      twitter              => undef,
+      uri                  => "/v1/customers/CU4I",
+    }
+
+=head2 create_customer
+
+    create_customer()
+    create_customer({ name => 'Bob', email => 'bob@foo.com' })
+
+Creates a customer.
+A customer hashref is optional.
 
 =head2 get_account
 

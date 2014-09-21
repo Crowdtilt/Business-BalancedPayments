@@ -1,4 +1,4 @@
-use Test::Most;
+use Test::Modern;
 
 use Business::BalancedPayments;
 use HTTP::Response;
@@ -12,7 +12,7 @@ subtest 'Retry multiple times' => sub {
     my $url = $bp->base_url . '/v1/marketplaces';
     my $num_tries = 0;
     $ua->map($url => sub { $num_tries++; return HTTP::Response->new(500) });
-    dies_ok { $bp->marketplace };
+    ok exception { $bp->marketplace };
     is $num_tries => 3, 'Tried 3 times';
 };
 
@@ -40,7 +40,7 @@ subtest 'No retries' => sub {
     my $url = $bp->base_url . '/v1/marketplaces';
     my $num_tries = 0;
     $ua->map($url => sub { $num_tries++; return HTTP::Response->new(500) });
-    dies_ok { $bp->marketplace };
+    ok exception { $bp->marketplace };
     is $num_tries => 1, 'Tried once';
 };
 
