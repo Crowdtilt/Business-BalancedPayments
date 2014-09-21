@@ -4,17 +4,16 @@ Business::BalancedPayments - BalancedPayments API bindings
 
 # VERSION
 
-version 0.1502
+version 1.0000
 
 # SYNOPSIS
 
     use Business::BalancedPayments;
 
-    my $secret = 'abc123';
-    my $bp = Business::BalancedPayments->new(secret => $secret);
+    my $bp = Business::BalancedPayments->client(secret => 'abc123');
 
     my $card = $bp->create_card({
-        card_number      => "5105105105105100",
+        card_number      => '5105105105105100',
         expiration_month => 12,
         expiration_year  => 2020,
         security_code    => 123,
@@ -35,35 +34,97 @@ a uri. For example, the following two lines are equivalent:
     $bp->get_account('AC7A');
     $bp->get_account('/v1/marketplaces/MK98/accounts/AC7A');
 
-## new
+## create
 
-    my $bp = Business::BalancedPayments->new(
+    my $bp = Business::BalancedPayments->client(
         secret  => $secret,
+        version => 1.1,     # optional, defaults to 1.1
         logger  => $logger, # optional
         retries => 3,       # optional
     );
 
-Instantiates a new \`Business::BalancedPayments\` client object.
+Returns a new Balanced client object.
 Parameters:
 
 - secret
 
     Required. The Balanced Payments secret key for your account.
 
-- logger
+- version
 
-    Optional.
-    A logger-like object.
-    It just needs to have a method named `DEBUG` that takes a single argument,
-    the message to be logged.
-    A [Log::Tiny](http://search.cpan.org/perldoc?Log::Tiny) object would be a good choice.
+    Optional. Defaults to `'1.0'`.
+    The only supported versions currently are `'1.0'` and `'1.1'`.
 
-- retries
+See [WebService::Client](http://search.cpan.org/perldoc?WebService::Client) for other supported parameters such as `logger`,
+`retries`, and `timeout`.
 
-    Optional.
-    The number of times to retry requests in cases when Balanced returns a 5xx
-    response.
-    Defaults to 0.
+# METHODS V1.1
+
+## get\_card
+
+    get_card($id)
+
+Returns the credit card for the given id.
+
+Example response:
+
+    {
+      'cards' => [
+        {
+          'id' => 'CC6J',
+          'href' => '/cards/CC6J',
+          'address' => {
+            'city' => undef,
+            'country_code' => undef,
+            'line1' => undef,
+            'line2' => undef,
+            'postal_code' => undef,
+            'state' => undef
+          },
+          'avs_postal_match' => undef,
+          'avs_result' => undef,
+          'avs_street_match' => undef,
+          'bank_name' => 'BANK OF HAWAII',
+          'brand' => 'MasterCard',
+          'can_credit' => 0,
+          'can_debit' => 1,
+          'category' => 'other',
+          'created_at' => '2014-09-21T05:55:17.564617Z',
+          'cvv' => undef,
+          'cvv_match' => undef,
+          'cvv_result' => undef,
+          'expiration_month' => 12,
+          'expiration_year' => 2020,
+          'fingerprint' => 'fc4c',
+          'is_verified' => $VAR1->{'cards'}[0]{'can_debit'},
+          'links' => { 'customer' => undef },
+          'meta' => {},
+          'name' => undef,
+          'number' => 'xxxxxxxxxxxx5100',
+          'type' => 'credit',
+          'updated_at' => '2014-09-21T05:55:17.564619Z'
+        }
+      ],
+      'links' => {
+        'cards.card_holds' => '/cards/{cards.id}/card_holds',
+        'cards.customer' => '/customers/{cards.customer}',
+        'cards.debits' => '/cards/{cards.id}/debits',
+        'cards.disputes' => '/cards/{cards.id}/disputes'
+      }
+    }
+
+## create\_card
+
+Creates a credit card.
+See `get_card` for an example response.
+
+    create_card({
+        number           => '5105105105105100',
+        expiration_month => 12,
+        expiration_year  => 2020,
+    })
+
+# METHODS V1.0
 
 ## get\_transactions
 
@@ -96,14 +157,58 @@ Example response:
 ## create\_card
 
     create_card({
-        card_number      => "5105105105105100",
+        card_number      => '5105105105105100',
         expiration_month => 12,
         expiration_year  => 2020,
         security_code    => 123,
     })
 
 Creates a credit card.
-See ["get\_card"](#get\_card) for an example response.
+See `get_card` for an example response.
+
+## get\_customer
+
+    get_customer($id)
+
+Returns the customer for the given id.
+
+Example response:
+
+    {
+      address              => {},
+      bank_accounts_uri    => "/v1/customers/CU4I/bank_accounts",
+      business_name        => undef,
+      cards_uri            => "/v1/customers/CU4I/cards",
+      created_at           => "2014-09-21T06:14:54.996408Z",
+      credits_uri          => "/v1/customers/CU4I/credits",
+      debits_uri           => "/v1/customers/CU4I/debits",
+      destination          => undef,
+      dob                  => undef,
+      ein                  => undef,
+      email                => 'bob@foo.com',
+      facebook             => undef,
+      holds_uri            => "/v1/customers/CU4I/holds",
+      id                   => "CU4I",
+      is_identity_verified => bless(do{\(my $o = 0)}, "JSON::XS::Boolean"),
+      meta                 => {},
+      name                 => "Bob",
+      phone                => undef,
+      refunds_uri          => "/v1/customers/CU4I/refunds",
+      reversals_uri        => "/v1/customers/CU4I/reversals",
+      source               => undef,
+      ssn_last4            => undef,
+      transactions_uri     => "/v1/customers/CU4I/transactions",
+      twitter              => undef,
+      uri                  => "/v1/customers/CU4I",
+    }
+
+## create\_customer
+
+    create_customer()
+    create_customer({ name => 'Bob', email => 'bob@foo.com' })
+
+Creates a customer.
+A customer hashref is optional.
 
 ## get\_account
 

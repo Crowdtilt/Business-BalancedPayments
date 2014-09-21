@@ -1,5 +1,10 @@
 Revision history for Business::BalancedPayments
  
+1.0000  2014-09-30
+        Added support for v1.1 of the Balanced API.
+        This is a breaking change, hence the major version increase.
+        This was necessary to add proper support for v1.1 of the Balanced API.
+
 0.1502  2014-09-22
         Refactored to use WebService::BaseClientRole to remove boilerplate http
         code.

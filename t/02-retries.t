@@ -1,4 +1,4 @@
-use Test::Most;
+use Test::Modern;
 
 use Business::BalancedPayments;
 use HTTP::Response;
@@ -7,19 +7,19 @@ use Test::Mock::LWP::Dispatch;
 
 subtest 'Retry multiple times' => sub {
     my $ua = LWP::UserAgent->new();
-    my $bp = Business::BalancedPayments->new(
-        secret => 9, retries => 2, ua => $ua);
+    my $bp = Business::BalancedPayments->client(
+        version => 1, secret => 9, retries => 2, ua => $ua);
     my $url = $bp->base_url . '/v1/marketplaces';
     my $num_tries = 0;
     $ua->map($url => sub { $num_tries++; return HTTP::Response->new(500) });
-    dies_ok { $bp->marketplace };
+    ok exception { $bp->marketplace };
     is $num_tries => 3, 'Tried 3 times';
 };
 
 subtest 'Retry and succeed' => sub {
     my $ua = LWP::UserAgent->new();
-    my $bp = Business::BalancedPayments->new(
-        secret => 9, retries => 2, ua => $ua);
+    my $bp = Business::BalancedPayments->client(
+        version => 1, secret => 9, retries => 2, ua => $ua);
     my $url = $bp->base_url . '/v1/marketplaces';
     my $num_tries = 0;
     $ua->map($url => sub {
@@ -36,11 +36,12 @@ subtest 'Retry and succeed' => sub {
 
 subtest 'No retries' => sub {
     my $ua = LWP::UserAgent->new();
-    my $bp = Business::BalancedPayments->new(secret => 9, ua => $ua);
+    my $bp = Business::BalancedPayments->client(
+        version => 1, secret => 9, ua => $ua);
     my $url = $bp->base_url . '/v1/marketplaces';
     my $num_tries = 0;
     $ua->map($url => sub { $num_tries++; return HTTP::Response->new(500) });
-    dies_ok { $bp->marketplace };
+    ok exception { $bp->marketplace };
     is $num_tries => 1, 'Tried once';
 };
 

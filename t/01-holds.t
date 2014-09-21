@@ -1,12 +1,11 @@
-use Test::Most;
+use Test::Modern;
 use Business::BalancedPayments;
 
-my $bp = Business::BalancedPayments->new(secret => 'secret');
+my $bp = Business::BalancedPayments->client(secret => 3, version => 1.0);
 
-my $hold = {};
-throws_ok { $bp->create_hold($hold) } qr/amount/, 'No ammount';
+like exception { $bp->create_hold({}) }, qr/amount/, 'No ammount';
 
-$hold = {amount => 500};
-throws_ok { $bp->create_hold($hold) } qr/account or card/, 'No account or card';
+like exception { $bp->create_hold({ amount => 500 }) }, qr/account or card/,
+    'No account or card';
 
 done_testing;
