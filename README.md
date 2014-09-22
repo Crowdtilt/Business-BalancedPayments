@@ -4,7 +4,7 @@ Business::BalancedPayments - BalancedPayments API bindings
 
 # VERSION
 
-version 0.1501
+version 0.1502
 
 # SYNOPSIS
 
@@ -620,10 +620,10 @@ Example response:
 
 # AUTHORS
 
-- Al Newkirk <al@crowdtilt.com>
-- Khaled Hussein <khaled@crowdtilt.com>
-- Naveed Massjouni <naveed@crowdtilt.com>
-- Will Wolf <will@crowdtilt.com>
+- Khaled Hussein <khaled@tilt.com>
+- Naveed Massjouni <naveed@tilt.com>
+- Al Newkirk <al@tilt.com>
+- Will Wolf <will@tilt.com>
 
 # COPYRIGHT AND LICENSE
 

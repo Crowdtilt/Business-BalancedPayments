@@ -11,7 +11,7 @@ use ExtUtils::MakeMaker ;
 
 my %WriteMakefileArgs = (
   "ABSTRACT" => "BalancedPayments API bindings",
-  "AUTHOR" => "Al Newkirk <al\@crowdtilt.com>, Khaled Hussein <khaled\@crowdtilt.com>, Naveed Massjouni <naveed\@crowdtilt.com>, Will Wolf <will\@crowdtilt.com>",
+  "AUTHOR" => "Khaled Hussein <khaled\@tilt.com>, Naveed Massjouni <naveed\@tilt.com>, Al Newkirk <al\@tilt.com>, Will Wolf <will\@tilt.com>",
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => 0
   },
@@ -27,6 +27,7 @@ my %WriteMakefileArgs = (
     "WebService::BaseClientRole" => "0.0006"
   },
   "TEST_REQUIRES" => {
+    "Exporter" => 0,
     "File::Spec" => 0,
     "HTTP::Response" => 0,
     "IO::Handle" => 0,
@@ -37,7 +38,7 @@ my %WriteMakefileArgs = (
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.1501",
+  "VERSION" => "0.1502",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -46,6 +47,7 @@ my %WriteMakefileArgs = (
 
 my %FallbackPrereqs = (
   "Carp" => 0,
+  "Exporter" => 0,
   "File::Spec" => 0,
   "HTTP::Request::Common" => 0,
   "HTTP::Response" => 0,
