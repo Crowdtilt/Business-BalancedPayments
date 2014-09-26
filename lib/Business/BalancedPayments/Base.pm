@@ -1,10 +1,12 @@
 package Business::BalancedPayments::Base;
 use Moo::Role;
-with 'WebService::BaseClientRole';
+with 'WebService::Client';
 
 use Carp qw(croak);
 use HTTP::Request::Common qw(GET POST);
 use JSON qw(encode_json);
+
+has '+base_url' => (is => 'ro', default => 'https://api.balancedpayments.com');
 
 has secret => (is => 'ro', required => 1);
 

@@ -1,84 +1,20 @@
 package Business::BalancedPayments;
-use Moo;
 
 # VERSION
 
 use Business::BalancedPayments::V10;
 use Business::BalancedPayments::V11;
 use Carp qw(croak);
-use HTTP::Request::Common qw(GET POST);
-use JSON qw(encode_json);
 
-has secret   => (is => 'ro', required => 1);
-has base_url => (is => 'ro', default => 'https://api.balancedpayments.com');
-has logger   => (is => 'ro');
-has retries  => (is => 'ro');
-has ua       => (is => 'ro');
-has version  => (
-    is      => 'ro',
-    default => '1.0',
-    isa => sub {
-        my $version = shift;
-        croak "Only versions 1.0 and 1.1 are supported"
-            unless $version and ($version == 1 or $version == 1.1);
-    },
-);
-
-has _base => (
-    is      => 'ro',
-    lazy    => 1,
-    default => sub {
-        my $self = shift;
-        my %args = (
-            secret   => $self->secret,
-            base_url => $self->base_url,
-            $self->logger  ? (logger  => $self->logger ) : (),
-            $self->retries ? (retries => $self->retries) : (),
-            $self->ua      ? (ua      => $self->ua     ) : (),
-        );
-        return $self->version == 1.1
-            ? Business::BalancedPayments::V11->new(%args)
-            : Business::BalancedPayments::V10->new(%args);
-    },
-    handles => [qw(
-        add_bank_account
-        add_card
-        capture_hold
-        confirm_bank_verification
-        create_account
-        create_bank_account
-        create_bank_verification
-        create_card
-        create_check_recipient
-        create_check_recipient_credit
-        create_credit
-        create_customer
-        create_debit
-        create_hold
-        get_account
-        get_account_by_email
-        get_bank_account
-        get_card
-        get_credit
-        get_customer
-        get_debit
-        get_hold
-        get_refund
-        get_refunds
-        get_transactions
-        invalidate_bank_account
-        marketplace
-        refund_debit
-        update_account
-        update_bank_account
-        void_hold
-
-        get
-        post
-        put
-        delete
-    )],
-);
+sub client {
+    my ($class, %args) = @_;
+    $args{version} ||= 1.1;
+    croak "only versions 1.0 and 1.1 are supported"
+        unless $args{version} == 1 or $args{version} == 1.1;
+    return $args{version} == 1
+        ? Business::BalancedPayments::V10->new(%args)
+        : Business::BalancedPayments::V11->new(%args);
+}
 
 # ABSTRACT: BalancedPayments API bindings
 
@@ -86,8 +22,7 @@ has _base => (
 
     use Business::BalancedPayments;
 
-    my $secret = 'abc123';
-    my $bp = Business::BalancedPayments->new(secret => $secret);
+    my $bp = Business::BalancedPayments->client(secret => 'abc123');
 
     my $card = $bp->create_card({
         card_number      => '5105105105105100',
@@ -111,16 +46,16 @@ a uri. For example, the following two lines are equivalent:
     $bp->get_account('AC7A');
     $bp->get_account('/v1/marketplaces/MK98/accounts/AC7A');
 
-=head2 new
+=head2 create
 
-    my $bp = Business::BalancedPayments->new(
+    my $bp = Business::BalancedPayments->client(
         secret  => $secret,
-        version => '1.1',   # optional, defaults to 1.0
+        version => 1.1,     # optional, defaults to 1.1
         logger  => $logger, # optional
         retries => 3,       # optional
     );
 
-Instantiates a new `Business::BalancedPayments` client object.
+Returns a new Balanced client object.
 Parameters:
 
 =over 4
@@ -136,8 +71,8 @@ The only supported versions currently are C<'1.0'> and C<'1.1'>.
 
 =back
 
-See L<WebService::BaseClientRole> for other supported constructor parameters
-such as C<logger>, C<retries>, and C<timeout>.
+See L<WebService::Client> for other supported parameters such as C<logger>,
+C<retries>, and C<timeout>.
 
 =head1 METHODS V1.1
 

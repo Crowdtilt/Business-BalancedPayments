@@ -12,11 +12,6 @@ my $card_data = {
 };
 
 subtest 'create a card' => sub {
-    my $bp = Business::BalancedPayments->new(
-        secret  => $ENV{PERL_BALANCED_TEST_SECRET},
-        version => 1.1,
-    );
-
     my $res = $bp->create_card( $card_data );
     ok $res->{cards} or diag explain $res;
     my $card1 = $res->{cards}[0];
