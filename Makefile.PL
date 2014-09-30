@@ -24,7 +24,8 @@ my %WriteMakefileArgs = (
     "HTTP::Request::Common" => 0,
     "JSON" => 0,
     "Moo" => 0,
-    "WebService::BaseClientRole" => "0.0006"
+    "Moo::Role" => 0,
+    "WebService::Client" => "0.0001"
   },
   "TEST_REQUIRES" => {
     "Exporter" => 0,
@@ -33,12 +34,12 @@ my %WriteMakefileArgs = (
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
     "Test::Mock::LWP::Dispatch" => 0,
+    "Test::Modern" => 0,
     "Test::More" => 0,
-    "Test::Most" => 0,
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.1502",
+  "VERSION" => "1.0000",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -55,10 +56,11 @@ my %FallbackPrereqs = (
   "IPC::Open3" => 0,
   "JSON" => 0,
   "Moo" => 0,
+  "Moo::Role" => 0,
   "Test::Mock::LWP::Dispatch" => 0,
+  "Test::Modern" => 0,
   "Test::More" => 0,
-  "Test::Most" => 0,
-  "WebService::BaseClientRole" => "0.0006",
+  "WebService::Client" => "0.0001",
   "strict" => 0,
   "warnings" => 0
 );

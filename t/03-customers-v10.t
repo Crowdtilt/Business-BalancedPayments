@@ -1,11 +1,9 @@
-use Test::Most;
-use Business::BalancedPayments;
+use Test::Modern;
+use t::lib::Common qw(bp_v10 skip_unless_has_secret);
 
-unless ($ENV{BALANCED_SECRET}) {
-    plan skip_all => 'BALANCED_SECRET not set for testing';
-}
+skip_unless_has_secret;
 
-my $bp = Business::BalancedPayments->new(secret => $ENV{BALANCED_SECRET});
+my $bp = bp_v10;
 
 my $cust = $bp->create_customer;
 ok ref $cust eq 'HASH', 'Created a customer object';
