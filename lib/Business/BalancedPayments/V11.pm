@@ -18,6 +18,10 @@ around get_card => _wrapper('cards');
 
 around create_card => _wrapper('cards');
 
+around get_customer => _wrapper('customers');
+
+around create_customer => _wrapper('customers');
+
 sub create_check_recipient {
     my ($self, $rec) = @_;
     croak 'The recipient param must be a hashref' unless ref $rec eq 'HASH';

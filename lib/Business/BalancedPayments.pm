@@ -16,7 +16,7 @@ sub client {
         : Business::BalancedPayments::V11->new(%args);
 }
 
-# ABSTRACT: BalancedPayments API bindings
+# ABSTRACT: Balanced Payments API bindings
 
 =head1 SYNOPSIS
 
@@ -36,7 +36,7 @@ sub client {
 =head1 DESCRIPTION
 
 This module provides bindings for the
-L<BalancedPayments|https://www.balancedpayments.com> API.
+L<Balanced|https://www.balancedpayments.com> API.
 
 =head1 METHODS
 
@@ -75,6 +75,9 @@ See L<WebService::Client> for other supported parameters such as C<logger>,
 C<retries>, and C<timeout>.
 
 =head1 METHODS V1.1
+
+These are the methods for version 1.1 of the Balanced API
+L<https://docs.balancedpayments.com/1.1/api>.
 
 =head2 get_card
 
@@ -132,7 +135,7 @@ Example response:
 =head2 create_card
 
 Creates a credit card.
-See C<get_card> for an example response.
+Returns the card card that was created.
 
     create_card({
         number           => '5105105105105100',
@@ -140,7 +143,57 @@ See C<get_card> for an example response.
         expiration_year  => 2020,
     })
 
+=head2 get_customer
+
+    get_customer($id)
+
+Returns the customer for the given id.
+
+Example response:
+
+    {
+      'address' => {
+        'city' => undef,
+        'country_code' => undef,
+        'line1' => undef,
+        'line2' => undef,
+        'postal_code' => undef,
+        'state' => undef
+      },
+      'business_name' => undef,
+      'created_at' => '2014-10-02T07:59:26.311760Z',
+      'dob_month' => undef,
+      'dob_year' => undef,
+      'ein' => undef,
+      'email' => 'foo@bar.com',
+      'href' => '/customers/CUe3pf7nX93sMvrd9qcC29W',
+      'id' => 'CUe3pf7nX93sMvrd9qcC29W',
+      'links' => {
+        'destination' => undef,
+        'source' => undef
+      },
+      'merchant_status' => 'no-match',
+      'meta' => {},
+      'name' => undef,
+      'phone' => undef,
+      'ssn_last4' => undef,
+      'updated_at' => '2014-10-02T07:59:26.405946Z'
+    }
+
+=head2 create_customer
+
+    create_customer()
+    create_customer({ name => 'Bob', email => 'bob@foo.com' })
+
+Creates a customer.
+A customer hashref is optional.
+Returns the customer object.
+
 =head1 METHODS V1.0
+
+These are the methods for version 1.0 of the Balanced API
+L<https://docs.balancedpayments.com/1.0/api>.
+Note that version 1.0 was officially deprecated March 2014. 
 
 =head2 get_transactions
 
@@ -179,8 +232,7 @@ Example response:
         security_code    => 123,
     })
 
-Creates a credit card.
-See C<get_card> for an example response.
+Creates a credit card. Returns the card object.
 
 =head2 get_customer
 
@@ -205,7 +257,7 @@ Example response:
       facebook             => undef,
       holds_uri            => "/v1/customers/CU4I/holds",
       id                   => "CU4I",
-      is_identity_verified => bless(do{\(my $o = 0)}, "JSON::XS::Boolean"),
+      is_identity_verified => 0,
       meta                 => {},
       name                 => "Bob",
       phone                => undef,
@@ -225,6 +277,7 @@ Example response:
 
 Creates a customer.
 A customer hashref is optional.
+Returns the customer object.
 
 =head2 get_account
 

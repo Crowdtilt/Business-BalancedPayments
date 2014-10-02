@@ -32,19 +32,6 @@ sub create_account {
     return $self->post($self->_uri('accounts'), $account);
 }
 
-sub get_customer {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri('customers', $id));
-}
-
-sub create_customer {
-    my ($self, $customer) = @_;
-    $customer ||= {};
-    croak 'The customer param must be a hashref' unless ref $customer eq 'HASH';
-    return $self->post($self->_uri('customers'), $customer);
-}
-
 sub update_account {
     my ($self, $account) = @_;
     croak 'The account param must be a hashref' unless ref $account eq 'HASH';
