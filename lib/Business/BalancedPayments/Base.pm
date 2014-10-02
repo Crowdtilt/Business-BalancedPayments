@@ -34,6 +34,19 @@ sub create_card {
     return $self->post($self->_uri('cards'), $card);
 }
 
+sub get_customer {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->_uri('customers', $id));
+}
+
+sub create_customer {
+    my ($self, $customer) = @_;
+    $customer ||= {};
+    croak 'The customer param must be a hashref' unless ref $customer eq 'HASH';
+    return $self->post($self->_uri('customers'), $customer);
+}
+
 sub log {
     my ($self, $msg) = @_;
     return unless $self->logger;

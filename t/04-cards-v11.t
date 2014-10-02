@@ -19,4 +19,12 @@ subtest 'create a card' => sub {
     is $card2->{id} => $card1->{id}, 'got correct card';
 };
 
+subtest 'add card to customer' => sub {
+    my $cust = $bp->create_customer({ email => 'foo@bar.com' });
+    my $card = $bp->create_card( $card_data );
+    $card = $bp->add_card($card, customer => $cust);
+    is $card->{links}{customer} => $cust->{id}
+        or diag explain $card;
+};
+
 done_testing;
