@@ -32,6 +32,40 @@ around get_customer => _wrapper('customers');
 
 around create_customer => _wrapper('customers');
 
+sub get_hold {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    my $res = $self->get($self->_uri('card_holds', $id));
+    return $res ? $res->{card_holds}[0] : undef;
+}
+
+sub create_hold {
+    my ($self, $hold, %args) = @_;
+    croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
+    croak 'The hold amount is missing' unless $hold->{amount};
+    my $card = $args{card} or croak 'The card param is missing';
+    croak 'The card param must be a hashref' unless ref $card eq 'HASH';
+    my $card_href = $card->{href} or croak 'The card href is missing';
+    return $self->post("$card_href/card_holds", $hold)->{card_holds}[0];
+}
+
+sub capture_hold {
+    my ($self, $hold, %args) = @_;
+    my $debit = $args{debit} || {};
+    croak 'The hold param is missing' unless $hold;
+    my $hold_href = $hold->{href} or croak 'The hold href is missing';
+    croak 'The optional debit param must be a hashref'
+        if $debit and ref $debit ne 'HASH';
+    return $self->post("$hold_href/debits", $debit)->{debits}[0];
+}
+
+sub void_hold {
+    my ($self, $hold) = @_;
+    croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
+    my $hold_href = $hold->{href} or croak 'The hold href is missing';
+    return $self->put($hold_href, { is_void => 'true' })->{card_holds}[0];
+}
+
 sub create_check_recipient {
     my ($self, $rec) = @_;
     croak 'The recipient param must be a hashref' unless ref $rec eq 'HASH';
@@ -169,6 +203,12 @@ It expects a card hashref, such as one returned by L</get_card>,
 and a customer hashref, such as one returned by L</get_customer>.
 Returns the card.
 
+Example:
+
+    my $customer = $bp->create_customer;
+    my $card = $bp->get_card($card_id);
+    $bp->add_card($card, customer => $customer);
+
 =head2 get_customer
 
     get_customer($id)
@@ -208,12 +248,89 @@ Example response:
 
 =head2 create_customer
 
-    create_customer()
-    create_customer({ name => 'Bob', email => 'bob@foo.com' })
+    create_customer($customer)
 
 Creates a customer.
 A customer hashref is optional.
-Returns the customer object.
+Returns the customer.
+
+Example:
+
+    $bp->create_customer({ name => 'Bob', email => 'bob@foo.com' });
+
+=head2 get_hold
+
+    get_hold($id)
+
+Returns the card hold for the given id.
+
+Example response:
+
+    {
+      'amount' => 123,
+      'created_at' => '2014-10-03T03:39:46.933465Z',
+      'currency' => 'USD',
+      'description' => undef,
+      'expires_at' => '2014-10-10T03:39:47.051257Z',
+      'failure_reason' => undef,
+      'failure_reason_code' => undef,
+      'href' => '/card_holds/HL7b0bw2Ooe6G3yad7dR1rRr',
+      'id' => 'HL7b0bw2Ooe6G3yad7dR1rRr',
+      'links' => {
+        'card' => 'CC7af3NesZk2bYR5GxqLLmfe',
+        'debit' => undef,
+        'order' => undef
+      },
+      'meta' => {},
+      'status' => 'succeeded',
+      'transaction_number' => 'HL7JT-EWF-5CQ6',
+      'updated_at' => '2014-10-03T03:39:47.094448Z',
+      'voided_at' => undef
+    }
+
+=head2 create_hold
+
+    create_hold($hold_data, card => $card)
+
+Creates a card hold.
+The C<$hold_data> hashref must contain an amount.
+The card param is a hashref such as one returned from L</get_card>.
+Returns the created hold.
+
+=head2 capture_hold
+
+    capture_hold($hold, debit => $debit)
+
+Captures a previously created card hold.
+This creates a debit.
+The C<$debit> hashref is optional and can contain an amount.
+Any amount up to the amount of the hold may be captured.
+Returns the created debit.
+
+Example:
+
+    my $hold = $bp->get_hold($hold_id);
+    my $debit = $bp->capture_hold(
+        $hold,
+        debit => {
+            amount                  => 1000,
+            description             => 'money for stuffs',
+            appears_on_statement_as => 'ACME 123',
+        }
+    );
+
+=head2 void_hold
+
+    void_hold($hold)
+
+Cancels the hold.
+Once voided, the hold can no longer be captured.
+Returns the voided hold.
+
+Example:
+
+    my $hold = $bp->get_hold($hold_id);
+    my $voided_hold = $bp->void_hold($hold);
 
 =cut
 
