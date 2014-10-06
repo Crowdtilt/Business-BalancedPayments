@@ -12,6 +12,7 @@ my $test_card = {
     number           => '5105105105105100',
     expiration_month => 12,
     expiration_year  => 2020,
+    name             => 'John Smith',
 };
 
 my $test_bank = {

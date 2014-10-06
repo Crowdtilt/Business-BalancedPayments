@@ -65,6 +65,12 @@ sub create_bank_account {
     return $self->post($self->_uri('bank_accounts'), $bank);
 }
 
+sub get_credit {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->_uri('credits', $id));
+}
+
 sub log {
     my ($self, $msg) = @_;
     return unless $self->logger;

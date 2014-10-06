@@ -67,6 +67,21 @@ around get_bank_account => _wrapper('bank_accounts');
 
 around create_bank_account => _wrapper('bank_accounts');
 
+method create_credit(HashRef $credit, HashRef :$bank, HashRef :$card) {
+    croak 'The credit amount is missing' unless $credit->{amount};
+    if ($bank) {
+        my $bank_href = $bank->{href} or croak 'The bank href is missing';
+        return $self->post("$bank_href/credits", $credit)->{credits}[0];
+    } elsif ($card) {
+        my $card_href = $card->{href} or croak 'The card href is missing';
+        return $self->post("$card_href/credits", $credit)->{credits}[0];
+    } else {
+        croak 'A bank or card param is required';
+    }
+}
+
+around get_credit => _wrapper('credits');
+
 method create_check_recipient(HashRef $rec) {
     croak 'The recipient name is missing' unless defined $rec->{name};
     croak 'The recipient address line1 is missing'
@@ -444,6 +459,50 @@ Example:
             postal_code => '94103',
         },
     });
+
+=head2 get_credit
+
+    get_credit($id)
+
+Returns the credit for the given id.
+
+Example response:
+
+    {
+      'amount' => 123,
+      'appears_on_statement_as' => 'Tilt.com',
+      'created_at' => '2014-10-06T06:52:00.522212Z',
+      'currency' => 'USD',
+      'description' => undef,
+      'failure_reason' => undef,
+      'failure_reason_code' => undef,
+      'href' => '/credits/CR27ns5sg1FFgHsGy5VEhowd',
+      'id' => 'CR27ns5sg1FFgHsGy5VEhowd',
+      'links' => {
+        'customer' => undef,
+        'destination' => 'BA26JfFfg1vqrCoXPzSSxtKg',
+        'order' => undef
+      },
+      'meta' => {},
+      'status' => 'succeeded',
+      'transaction_number' => 'CR4F7-4XQ-JLDG',
+      'updated_at' => '2014-10-06T06:52:03.558485Z'
+    }
+
+=head2 create_credit
+
+    create_credit($credit, bank_account => $bank)
+    create_credit($credit, card => $card)
+
+Sends money to a bank account or a credit card.
+The C<$credit> hashref must contain an amount.
+A bank_account or card param is required.
+Returns the created credit.
+
+Example:
+
+    my $bank = $bp->get_bank_account($bank_account_id);
+    my $credit = $bp->create_credit({ amount => 123 }, bank_account => $bank);
 
 =cut
 
