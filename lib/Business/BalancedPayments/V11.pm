@@ -15,9 +15,9 @@ sub BUILD {
         accept => 'application/vnd.api+json;revision=1.1');
 }
 
-around get_card => _wrapper('cards');
+around get_card => _unpack_response('cards');
 
-around create_card => _wrapper('cards');
+around create_card => _unpack_response('cards');
 
 method add_card(HashRef $card, HashRef :$customer!) {
     my $card_href = $card->{href} or croak 'The card href is missing';
@@ -25,9 +25,9 @@ method add_card(HashRef $card, HashRef :$customer!) {
     return $self->put($card->{href}, { customer => $cust_href })->{cards}[0];
 }
 
-around get_customer => _wrapper('customers');
+around get_customer => _unpack_response('customers');
 
-around create_customer => _wrapper('customers');
+around create_customer => _unpack_response('customers');
 
 method get_hold(Str $id) {
     my $res = $self->get($self->_uri('card_holds', $id));
@@ -56,16 +56,16 @@ method create_debit(HashRef $debit, HashRef :$card!) {
     return $self->post("$card_href/debits", $debit)->{debits}[0];
 }
 
-around get_debit => _wrapper('debits');
+around get_debit => _unpack_response('debits');
 
 method refund_debit(HashRef $debit) {
     my $debit_href = $debit->{href} or croak 'The debit href is missing';
     return $self->post("$debit_href/refunds", $debit)->{refunds}[0];
 }
 
-around get_bank_account => _wrapper('bank_accounts');
+around get_bank_account => _unpack_response('bank_accounts');
 
-around create_bank_account => _wrapper('bank_accounts');
+around create_bank_account => _unpack_response('bank_accounts');
 
 method create_credit(HashRef $credit, HashRef :$bank_account, HashRef :$card) {
     croak 'The credit amount is missing' unless $credit->{amount};
@@ -81,7 +81,7 @@ method create_credit(HashRef $credit, HashRef :$bank_account, HashRef :$card) {
     }
 }
 
-around get_credit => _wrapper('credits');
+around get_credit => _unpack_response('credits');
 
 method update_bank_account(HashRef $bank) {
     my $bank_href = $bank->{href} or croak 'The bank_account href is missing';
@@ -134,7 +134,7 @@ method _build_uris {
     return { map { (split /^marketplaces./)[1] => $links->{$_} } keys %$links };
 }
 
-sub _wrapper {
+sub _unpack_response {
     my ($name) = @_;
     return sub {
         my ($orig, $self, @args) = @_;
