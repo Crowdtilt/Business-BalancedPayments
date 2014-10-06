@@ -67,10 +67,11 @@ around get_bank_account => _wrapper('bank_accounts');
 
 around create_bank_account => _wrapper('bank_accounts');
 
-method create_credit(HashRef $credit, HashRef :$bank, HashRef :$card) {
+method create_credit(HashRef $credit, HashRef :$bank_account, HashRef :$card) {
     croak 'The credit amount is missing' unless $credit->{amount};
-    if ($bank) {
-        my $bank_href = $bank->{href} or croak 'The bank href is missing';
+    if ($bank_account) {
+        my $bank_href = $bank_account->{href}
+            or croak 'The bank_account href is missing';
         return $self->post("$bank_href/credits", $credit)->{credits}[0];
     } elsif ($card) {
         my $card_href = $card->{href} or croak 'The card href is missing';
@@ -82,6 +83,30 @@ method create_credit(HashRef $credit, HashRef :$bank, HashRef :$card) {
 
 around get_credit => _wrapper('credits');
 
+method update_bank_account(HashRef $bank) {
+    my $bank_href = $bank->{href} or croak 'The bank_account href is missing';
+    return $self->put($bank_href, $bank)->{bank_accounts}[0];
+}
+
+method create_bank_verification(HashRef :$bank_account!) {
+    my $bank_href = $bank_account->{href}
+        or croak 'The bank_account href is missing';
+    return $self->post("$bank_href/verifications", {})
+        ->{bank_account_verifications}[0];
+}
+
+method get_bank_verification(Str $id) {
+    my $res = $self->get("/verifications/$id");
+    return $res ? $res->{bank_account_verifications}[0] : undef;
+}
+
+method confirm_bank_verification(HashRef $verification, Int :$amount_1!, Int :$amount_2!) {
+    my $ver_href = $verification->{href}
+        or croak 'The verification href is missing';
+    return $self->put($ver_href, {amount_1 => $amount_1, amount_2 => $amount_2})
+        ->{bank_account_verifications}[0];
+}
+
 method create_check_recipient(HashRef $rec) {
     croak 'The recipient name is missing' unless defined $rec->{name};
     croak 'The recipient address line1 is missing'
@@ -92,8 +117,7 @@ method create_check_recipient(HashRef $rec) {
     return $res->{check_recipients}[0];
 }
 
-method create_check_recipient_credit(
-        HashRef $credit, HashRef :$check_recipient!) {
+method create_check_recipient_credit(HashRef $credit, HashRef :$check_recipient!) {
     my $rec_id = $check_recipient->{id}
         or croak 'The check_recipient hashref needs an id';
     croak 'The credit must contain an amount' unless $credit->{amount};
@@ -503,6 +527,58 @@ Example:
 
     my $bank = $bp->get_bank_account($bank_account_id);
     my $credit = $bp->create_credit({ amount => 123 }, bank_account => $bank);
+
+=head2 get_bank_verification
+
+    get_bank_verification($id)
+
+Gets a bank account verification.
+
+Example response:
+
+    {
+      'attempts' => 0,
+      'attempts_remaining' => 3,
+      'created_at' => '2014-10-06T08:01:59.972034Z',
+      'deposit_status' => 'succeeded',
+      'href' => '/verifications/BZnWun9Itq7FVtj1nludGjC',
+      'id' => 'BZnWun9Itq7FVtj1nludGjC',
+      'links' => {
+        'bank_account' => 'BAdFCPv3GkIlXEWQrdTyIW9'
+      },
+      'meta' => {},
+      'updated_at' => '2014-10-06T08:02:00.268756Z',
+      'verification_status' => 'pending'
+    }
+
+=head2 create_bank_verification
+
+    create_bank_verification(bank_account => $bank)
+
+Create a new bank account verification.
+This initiates the process of sending micro deposits to the bank account which
+will be used to verify bank account ownership.
+A bank_account param is required.
+Returns the created bank account verification.
+
+Example:
+
+    my $bank = $bp->get_bank_account($bank_account_id);
+    my $verification = $bp->create_bank_verification(bank_account => $bank);
+
+=head2 confirm_bank_verification
+
+    confirm_bank_verification($verification,
+        amount_1 => $amount_1, amount_2 => $amount_2);
+
+Confirm the trial deposit amounts that were sent to the bank account.
+Returns the bank account verification.
+
+Example:
+
+    my $ver = $bp->get_bank_account($bank_account_id);
+    $verification =
+        $bp->confirm_bank_verification($ver, amount_1 => 1, amount_2 => 2);
 
 =cut
 

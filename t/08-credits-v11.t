@@ -10,7 +10,7 @@ my $bp = bp_v11;
 
 subtest 'create a credit to a bank' => sub {
     my $bank = create_test_bank;
-    my $credit = $bp->create_credit({ amount => 123 }, bank => $bank);
+    my $credit = $bp->create_credit({ amount => 123 }, bank_account => $bank);
     is $credit->{amount} => 123;
 
     $credit = $bp->get_credit($credit->{id});
