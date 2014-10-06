@@ -47,6 +47,12 @@ sub create_customer {
     return $self->post($self->_uri('customers'), $customer);
 }
 
+sub get_debit {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->_uri('debits', $id));
+}
+
 sub log {
     my ($self, $msg) = @_;
     return unless $self->logger;

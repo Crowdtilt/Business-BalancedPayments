@@ -50,6 +50,19 @@ method void_hold(HashRef $hold) {
     return $self->put($hold_href, { is_void => 'true' })->{card_holds}[0];
 }
 
+method create_debit(HashRef $debit, HashRef :$card!) {
+    croak 'The debit amount is missing' unless $debit->{amount};
+    my $card_href = $card->{href} or croak 'The card href is missing';
+    return $self->post("$card_href/debits", $debit)->{debits}[0];
+}
+
+around get_debit => _wrapper('debits');
+
+method refund_debit(HashRef $debit) {
+    my $debit_href = $debit->{href} or croak 'The debit href is missing';
+    return $self->post("$debit_href/refunds", $debit)->{refunds}[0];
+}
+
 method create_check_recipient(HashRef $rec) {
     croak 'The recipient name is missing' unless defined $rec->{name};
     croak 'The recipient address line1 is missing'
@@ -300,6 +313,83 @@ Example:
 
     my $hold = $bp->get_hold($hold_id);
     my $voided_hold = $bp->void_hold($hold);
+
+=head2 get_debit
+
+    get_debit($id)
+
+Returns the debit for the given id.
+
+Example response:
+
+    {
+      'amount' => 123,
+      'appears_on_statement_as' => 'BAL*Tilt.com',
+      'created_at' => '2014-10-06T05:01:39.045336Z',
+      'currency' => 'USD',
+      'description' => undef,
+      'failure_reason' => undef,
+      'failure_reason_code' => undef,
+      'href' => '/debits/WD6F5x4VpYx4hfB02tGIqNU1',
+      'id' => 'WD6F5x4VpYx4hfB02tGIqNU1',
+      'links' => {
+        'card_hold' => 'HL6F4q5kJGxt1ftH8vgZZJkh',
+        'customer' => undef,
+        'dispute' => undef,
+        'order' => undef,
+        'source' => 'CC6DFWepK7eeL03cZ06Sb9Xf'
+      },
+      'meta' => {},
+      'status' => 'succeeded',
+      'transaction_number' => 'WAVD-B0K-R7TX',
+      'updated_at' => '2014-10-06T05:01:39.542306Z'
+    }
+
+=head2 create_debit
+
+    create_debit($debit, card => $card)
+
+Debits a card.
+The C<$debit> hashref must contain an amount.
+The card param is a hashref such as one returned from L</get_card>.
+Returns the created debit.
+
+Example:
+
+    my $card = $bp->get_card($card_id);
+    my $debit = $bp->create_debit({ amount => 123 }, card => $card);
+
+=head2 refund_debit
+
+    refund_debit($debit)
+
+Refunds a debit.
+Returnds the refund.
+
+Example:
+
+    my $debit = $bp->get_debit($debit_id);
+    my $refund = $bp->refund_debit($debit);
+
+Example response:
+
+    {
+      'amount' => 123,
+      'created_at' => '2014-10-06T04:57:44.959806Z',
+      'currency' => 'USD',
+      'description' => undef,
+      'href' => '/refunds/RF2pO6Fz8breGs2TAIpfE2nr',
+      'id' => 'RF2pO6Fz8breGs2TAIpfE2nr',
+      'links' => {
+        'debit' => 'WD2hQV9COFX0aPMSIzyeAuAg',
+        'dispute' => undef,
+        'order' => undef
+      },
+      'meta' => {},
+      'status' => 'succeeded',
+      'transaction_number' => 'RFRGL-EU1-A39B',
+      'updated_at' => '2014-10-06T04:57:48.161218Z'
+    }
 
 =cut
 

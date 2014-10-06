@@ -91,12 +91,6 @@ sub capture_hold {
     return $self->post($self->_uri('debits'), $data);
 }
 
-sub get_debit {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri('debits', $id));
-}
-
 sub create_debit {
     my ($self, $debit, %args) = @_;
     croak 'The debit param must be a hashref' unless ref $debit eq 'HASH';
