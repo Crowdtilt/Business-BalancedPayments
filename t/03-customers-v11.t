@@ -15,6 +15,5 @@ my $cust2 = $bp->get_customer( $cust1->{id} );
 ok ref $cust2 eq 'HASH', 'got the customer';
 is $cust2->{id} => $cust1->{id}, 'got correct customer';
 is $cust2->{email} => 'foo@bar.com', 'got correct email';
-diag explain $cust2;
 
 done_testing;

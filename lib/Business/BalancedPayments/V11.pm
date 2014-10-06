@@ -3,6 +3,7 @@ use Moo;
 with 'Business::BalancedPayments::Base';
 
 use Carp qw(croak);
+use Method::Signatures;
 
 has marketplaces_uri => ( is => 'ro', default => '/marketplaces' );
 
@@ -18,12 +19,8 @@ around get_card => _wrapper('cards');
 
 around create_card => _wrapper('cards');
 
-sub add_card {
-    my ($self, $card, %args) = @_;
-    my $customer = $args{customer};
-    croak 'The card param must be a hashref' unless ref $card eq 'HASH';
+method add_card(HashRef $card, HashRef :$customer!) {
     my $card_href = $card->{href} or croak 'The card href is missing';
-    croak 'The customer param must be a hashref' unless ref $customer eq 'HASH';
     my $cust_href = $customer->{href} or croak 'The customer href is missing';
     return $self->put($card->{href}, { customer => $cust_href })->{cards}[0];
 }
@@ -32,43 +29,28 @@ around get_customer => _wrapper('customers');
 
 around create_customer => _wrapper('customers');
 
-sub get_hold {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
+method get_hold(Str $id) {
     my $res = $self->get($self->_uri('card_holds', $id));
     return $res ? $res->{card_holds}[0] : undef;
 }
 
-sub create_hold {
-    my ($self, $hold, %args) = @_;
-    croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
+method create_hold(HashRef $hold, HashRef :$card!) {
     croak 'The hold amount is missing' unless $hold->{amount};
-    my $card = $args{card} or croak 'The card param is missing';
-    croak 'The card param must be a hashref' unless ref $card eq 'HASH';
     my $card_href = $card->{href} or croak 'The card href is missing';
     return $self->post("$card_href/card_holds", $hold)->{card_holds}[0];
 }
 
-sub capture_hold {
-    my ($self, $hold, %args) = @_;
-    my $debit = $args{debit} || {};
-    croak 'The hold param is missing' unless $hold;
+method capture_hold(HashRef $hold, HashRef :$debit={}) {
     my $hold_href = $hold->{href} or croak 'The hold href is missing';
-    croak 'The optional debit param must be a hashref'
-        if $debit and ref $debit ne 'HASH';
     return $self->post("$hold_href/debits", $debit)->{debits}[0];
 }
 
-sub void_hold {
-    my ($self, $hold) = @_;
-    croak 'The hold param must be a hashref' unless ref $hold eq 'HASH';
+method void_hold(HashRef $hold) {
     my $hold_href = $hold->{href} or croak 'The hold href is missing';
     return $self->put($hold_href, { is_void => 'true' })->{card_holds}[0];
 }
 
-sub create_check_recipient {
-    my ($self, $rec) = @_;
-    croak 'The recipient param must be a hashref' unless ref $rec eq 'HASH';
+method create_check_recipient(HashRef $rec) {
     croak 'The recipient name is missing' unless defined $rec->{name};
     croak 'The recipient address line1 is missing'
         unless $rec->{address}{line1};
@@ -78,33 +60,20 @@ sub create_check_recipient {
     return $res->{check_recipients}[0];
 }
 
-sub create_check_recipient_credit {
-    my ($self, $credit, %args) = @_;
-    my $check_recipient = $args{check_recipient};
-    croak 'The check_recipient param must be a hashref'
-        unless ref $check_recipient eq 'HASH';
-    croak 'The check_recipient hashref needs an id'
-        unless $check_recipient->{id};
-    croak 'The credit param must be a hashref' unless ref $credit eq 'HASH';
+method create_check_recipient_credit(
+        HashRef $credit, HashRef :$check_recipient!) {
+    my $rec_id = $check_recipient->{id}
+        or croak 'The check_recipient hashref needs an id';
     croak 'The credit must contain an amount' unless $credit->{amount};
-
-    my $res = $self->post(
-        "/check_recipients/$check_recipient->{id}/credits", $credit);
+    my $res = $self->post("/check_recipients/$rec_id/credits", $credit);
     return $res->{credits}[0];
 }
 
-sub _build_marketplaces {
-    my ($self) = @_;
-    return $self->get($self->marketplaces_uri);
-}
+method _build_marketplaces { $self->get($self->marketplaces_uri) }
 
-sub _build_marketplace {
-    my ($self) = @_;
-    return $self->marketplaces->{marketplaces}[0];
-}
+method _build_marketplace { $self->marketplaces->{marketplaces}[0] }
 
-sub _build_uris {
-    my ($self) = @_;
+method _build_uris {
     my $links = $self->marketplaces->{links};
     return { map { (split /^marketplaces./)[1] => $links->{$_} } keys %$links };
 }

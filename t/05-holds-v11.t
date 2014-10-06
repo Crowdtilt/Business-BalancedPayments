@@ -29,4 +29,14 @@ subtest 'create and void hold' => sub {
     ok $hold->{voided_at} or diag explain $hold;
 };
 
+subtest 'create hold with bad params' => sub {
+    ok exception { $bp->create_hold() };
+    ok exception { $bp->create_hold({ amount => 1 }) };
+    ok exception { $bp->create_hold({ amount => 1 }, card => 4) };
+    like exception { $bp->create_hold({ foo => 1 }, card => $card) },
+        qr/the hold amount is missing/i;
+    like exception { $bp->create_hold({ amount => 1 }, card => {}) },
+        qr/the card href is missing/i;
+};
+
 done_testing;
