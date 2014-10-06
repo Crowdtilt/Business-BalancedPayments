@@ -63,6 +63,10 @@ method refund_debit(HashRef $debit) {
     return $self->post("$debit_href/refunds", $debit)->{refunds}[0];
 }
 
+around get_bank_account => _wrapper('bank_accounts');
+
+around create_bank_account => _wrapper('bank_accounts');
+
 method create_check_recipient(HashRef $rec) {
     croak 'The recipient name is missing' unless defined $rec->{name};
     croak 'The recipient address line1 is missing'
@@ -121,60 +125,54 @@ Returns the card for the given id.
 Example response:
 
     {
-      'cards' => [
-        {
-          'id' => 'CC6J',
-          'href' => '/cards/CC6J',
-          'address' => {
-            'city' => undef,
-            'country_code' => undef,
-            'line1' => undef,
-            'line2' => undef,
-            'postal_code' => undef,
-            'state' => undef
-          },
-          'avs_postal_match' => undef,
-          'avs_result' => undef,
-          'avs_street_match' => undef,
-          'bank_name' => 'BANK OF HAWAII',
-          'brand' => 'MasterCard',
-          'can_credit' => 0,
-          'can_debit' => 1,
-          'category' => 'other',
-          'created_at' => '2014-09-21T05:55:17.564617Z',
-          'cvv' => undef,
-          'cvv_match' => undef,
-          'cvv_result' => undef,
-          'expiration_month' => 12,
-          'expiration_year' => 2020,
-          'fingerprint' => 'fc4c',
-          'is_verified' => $VAR1->{'cards'}[0]{'can_debit'},
-          'links' => { 'customer' => undef },
-          'meta' => {},
-          'name' => undef,
-          'number' => 'xxxxxxxxxxxx5100',
-          'type' => 'credit',
-          'updated_at' => '2014-09-21T05:55:17.564619Z'
-        }
-      ],
-      'links' => {
-        'cards.card_holds' => '/cards/{cards.id}/card_holds',
-        'cards.customer' => '/customers/{cards.customer}',
-        'cards.debits' => '/cards/{cards.id}/debits',
-        'cards.disputes' => '/cards/{cards.id}/disputes'
-      }
+      'id' => 'CC6J',
+      'href' => '/cards/CC6J',
+      'address' => {
+        'city' => undef,
+        'country_code' => undef,
+        'line1' => undef,
+        'line2' => undef,
+        'postal_code' => undef,
+        'state' => undef
+      },
+      'avs_postal_match' => undef,
+      'avs_result' => undef,
+      'avs_street_match' => undef,
+      'bank_name' => 'BANK OF HAWAII',
+      'brand' => 'MasterCard',
+      'can_credit' => 0,
+      'can_debit' => 1,
+      'category' => 'other',
+      'created_at' => '2014-09-21T05:55:17.564617Z',
+      'cvv' => undef,
+      'cvv_match' => undef,
+      'cvv_result' => undef,
+      'expiration_month' => 12,
+      'expiration_year' => 2020,
+      'fingerprint' => 'fc4c',
+      'is_verified' => $VAR1->{'cards'}[0]{'can_debit'},
+      'links' => { 'customer' => undef },
+      'meta' => {},
+      'name' => undef,
+      'number' => 'xxxxxxxxxxxx5100',
+      'type' => 'credit',
+      'updated_at' => '2014-09-21T05:55:17.564619Z'
     }
 
 =head2 create_card
 
+    create_card($card)
+
 Creates a card.
 Returns the card card that was created.
 
-    create_card({
+Example:
+
+    my $card = $bp->create_card({
         number           => '5105105105105100',
         expiration_month => 12,
         expiration_year  => 2020,
-    })
+    });
 
 =head2 add_card
 
@@ -390,6 +388,62 @@ Example response:
       'transaction_number' => 'RFRGL-EU1-A39B',
       'updated_at' => '2014-10-06T04:57:48.161218Z'
     }
+
+=head2 get_bank_account
+
+    get_bank_account($id)
+
+Returns the bank account for the given id.
+
+Example response:
+
+    {
+      'account_number' => 'xxxxxxxx6789',
+      'account_type' => 'checking',
+      'address' => {
+        'city' => undef,
+        'country_code' => 'USA',
+        'line1' => '123 Abc St',
+        'line2' => undef,
+        'postal_code' => '94103',
+        'state' => undef
+      },
+      'bank_name' => '',
+      'can_credit' => bless( do{\(my $o = 1)}, 'JSON::XS::Boolean' ),
+      'can_debit' => bless( do{\(my $o = 0)}, 'JSON::XS::Boolean' ),
+      'created_at' => '2014-10-06T06:40:14.649386Z',
+      'fingerprint' => 'cc552495fc90556293db500b985bacc918d9fb4d37b42052adf64',
+      'href' => '/bank_accounts/BA4TAWvO3d3J14i6BdjJUZsp',
+      'id' => 'BA4TAWvO3d3J14i6BdjJUZsp',
+      'links' => {
+        'bank_account_verification' => undef,
+        'customer' => undef
+      },
+      'meta' => {},
+      'name' => 'Bob Smith',
+      'routing_number' => '110000000',
+      'updated_at' => '2014-10-06T06:40:14.649388Z'
+    }
+
+=head2 create_bank_account
+
+    create_bank_account($bank)
+
+Creates a bank account.
+Returns the bank account that was created.
+
+Example:
+
+    my $bank = $bp->create_bank_account({
+        account_number => '000123456789',
+        acount_type    => 'checking',
+        name           => 'Bob Smith',
+        routing_number => '110000000',
+        address => {
+            line1       => '123 Abc St',
+            postal_code => '94103',
+        },
+    });
 
 =cut
 

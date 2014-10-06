@@ -53,6 +53,18 @@ sub get_debit {
     return $self->get($self->_uri('debits', $id));
 }
 
+sub get_bank_account {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->_uri('bank_accounts', $id));
+}
+
+sub create_bank_account {
+    my ($self, $bank) = @_;
+    croak 'The bank account must be a hashref' unless ref $bank eq 'HASH';
+    return $self->post($self->_uri('bank_accounts'), $bank);
+}
+
 sub log {
     my ($self, $msg) = @_;
     return unless $self->logger;

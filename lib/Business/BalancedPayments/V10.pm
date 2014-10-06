@@ -145,12 +145,6 @@ sub refund_debit {
     return $self->post($self->_uri('refunds'), $debit);
 }
 
-sub get_bank_account {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri('bank_accounts', $id));
-}
-
 sub confirm_bank_verification {
     my ($self, $id, %args) = @_;
     my $verification_id = $args{verification_id};
@@ -161,12 +155,6 @@ sub confirm_bank_verification {
     my $amount_1 = $args{amount_1} or croak 'The amount_1 param is missing';
     my $amount_2 = $args{amount_2} or croak 'The amount_2 param is missing';
     return $self->put($uri => {amount_1 => $amount_1, amount_2 => $amount_2});
-}
-
-sub create_bank_account {
-    my ($self, $bank) = @_;
-    croak 'The bank account must be a hashref' unless ref $bank eq 'HASH';
-    return $self->post($self->_uri('bank_accounts'), $bank);
 }
 
 sub create_bank_verification {
