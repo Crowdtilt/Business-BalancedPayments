@@ -47,6 +47,30 @@ sub create_customer {
     return $self->post($self->_uri('customers'), $customer);
 }
 
+sub get_debit {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->_uri('debits', $id));
+}
+
+sub get_bank_account {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->_uri('bank_accounts', $id));
+}
+
+sub create_bank_account {
+    my ($self, $bank) = @_;
+    croak 'The bank account must be a hashref' unless ref $bank eq 'HASH';
+    return $self->post($self->_uri('bank_accounts'), $bank);
+}
+
+sub get_credit {
+    my ($self, $id) = @_;
+    croak 'The id param is missing' unless defined $id;
+    return $self->get($self->_uri('credits', $id));
+}
+
 sub log {
     my ($self, $msg) = @_;
     return unless $self->logger;

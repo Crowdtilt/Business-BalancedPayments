@@ -15,9 +15,9 @@ sub BUILD {
         accept => 'application/vnd.api+json;revision=1.1');
 }
 
-around get_card => _wrapper('cards');
+around get_card => _unpack_response('cards');
 
-around create_card => _wrapper('cards');
+around create_card => _unpack_response('cards');
 
 method add_card(HashRef $card, HashRef :$customer!) {
     my $card_href = $card->{href} or croak 'The card href is missing';
@@ -25,9 +25,9 @@ method add_card(HashRef $card, HashRef :$customer!) {
     return $self->put($card->{href}, { customer => $cust_href })->{cards}[0];
 }
 
-around get_customer => _wrapper('customers');
+around get_customer => _unpack_response('customers');
 
-around create_customer => _wrapper('customers');
+around create_customer => _unpack_response('customers');
 
 method get_hold(Str $id) {
     my $res = $self->get($self->_uri('card_holds', $id));
@@ -50,6 +50,63 @@ method void_hold(HashRef $hold) {
     return $self->put($hold_href, { is_void => 'true' })->{card_holds}[0];
 }
 
+method create_debit(HashRef $debit, HashRef :$card!) {
+    croak 'The debit amount is missing' unless $debit->{amount};
+    my $card_href = $card->{href} or croak 'The card href is missing';
+    return $self->post("$card_href/debits", $debit)->{debits}[0];
+}
+
+around get_debit => _unpack_response('debits');
+
+method refund_debit(HashRef $debit) {
+    my $debit_href = $debit->{href} or croak 'The debit href is missing';
+    return $self->post("$debit_href/refunds", $debit)->{refunds}[0];
+}
+
+around get_bank_account => _unpack_response('bank_accounts');
+
+around create_bank_account => _unpack_response('bank_accounts');
+
+method create_credit(HashRef $credit, HashRef :$bank_account, HashRef :$card) {
+    croak 'The credit amount is missing' unless $credit->{amount};
+    if ($bank_account) {
+        my $bank_href = $bank_account->{href}
+            or croak 'The bank_account href is missing';
+        return $self->post("$bank_href/credits", $credit)->{credits}[0];
+    } elsif ($card) {
+        my $card_href = $card->{href} or croak 'The card href is missing';
+        return $self->post("$card_href/credits", $credit)->{credits}[0];
+    } else {
+        croak 'A bank or card param is required';
+    }
+}
+
+around get_credit => _unpack_response('credits');
+
+method update_bank_account(HashRef $bank) {
+    my $bank_href = $bank->{href} or croak 'The bank_account href is missing';
+    return $self->put($bank_href, $bank)->{bank_accounts}[0];
+}
+
+method create_bank_verification(HashRef :$bank_account!) {
+    my $bank_href = $bank_account->{href}
+        or croak 'The bank_account href is missing';
+    return $self->post("$bank_href/verifications", {})
+        ->{bank_account_verifications}[0];
+}
+
+method get_bank_verification(Str $id) {
+    my $res = $self->get("/verifications/$id");
+    return $res ? $res->{bank_account_verifications}[0] : undef;
+}
+
+method confirm_bank_verification(HashRef $verification, Int :$amount_1!, Int :$amount_2!) {
+    my $ver_href = $verification->{href}
+        or croak 'The verification href is missing';
+    return $self->put($ver_href, {amount_1 => $amount_1, amount_2 => $amount_2})
+        ->{bank_account_verifications}[0];
+}
+
 method create_check_recipient(HashRef $rec) {
     croak 'The recipient name is missing' unless defined $rec->{name};
     croak 'The recipient address line1 is missing'
@@ -60,8 +117,7 @@ method create_check_recipient(HashRef $rec) {
     return $res->{check_recipients}[0];
 }
 
-method create_check_recipient_credit(
-        HashRef $credit, HashRef :$check_recipient!) {
+method create_check_recipient_credit(HashRef $credit, HashRef :$check_recipient!) {
     my $rec_id = $check_recipient->{id}
         or croak 'The check_recipient hashref needs an id';
     croak 'The credit must contain an amount' unless $credit->{amount};
@@ -78,7 +134,7 @@ method _build_uris {
     return { map { (split /^marketplaces./)[1] => $links->{$_} } keys %$links };
 }
 
-sub _wrapper {
+sub _unpack_response {
     my ($name) = @_;
     return sub {
         my ($orig, $self, @args) = @_;
@@ -108,60 +164,54 @@ Returns the card for the given id.
 Example response:
 
     {
-      'cards' => [
-        {
-          'id' => 'CC6J',
-          'href' => '/cards/CC6J',
-          'address' => {
-            'city' => undef,
-            'country_code' => undef,
-            'line1' => undef,
-            'line2' => undef,
-            'postal_code' => undef,
-            'state' => undef
-          },
-          'avs_postal_match' => undef,
-          'avs_result' => undef,
-          'avs_street_match' => undef,
-          'bank_name' => 'BANK OF HAWAII',
-          'brand' => 'MasterCard',
-          'can_credit' => 0,
-          'can_debit' => 1,
-          'category' => 'other',
-          'created_at' => '2014-09-21T05:55:17.564617Z',
-          'cvv' => undef,
-          'cvv_match' => undef,
-          'cvv_result' => undef,
-          'expiration_month' => 12,
-          'expiration_year' => 2020,
-          'fingerprint' => 'fc4c',
-          'is_verified' => $VAR1->{'cards'}[0]{'can_debit'},
-          'links' => { 'customer' => undef },
-          'meta' => {},
-          'name' => undef,
-          'number' => 'xxxxxxxxxxxx5100',
-          'type' => 'credit',
-          'updated_at' => '2014-09-21T05:55:17.564619Z'
-        }
-      ],
-      'links' => {
-        'cards.card_holds' => '/cards/{cards.id}/card_holds',
-        'cards.customer' => '/customers/{cards.customer}',
-        'cards.debits' => '/cards/{cards.id}/debits',
-        'cards.disputes' => '/cards/{cards.id}/disputes'
-      }
+      'id' => 'CC6J',
+      'href' => '/cards/CC6J',
+      'address' => {
+        'city' => undef,
+        'country_code' => undef,
+        'line1' => undef,
+        'line2' => undef,
+        'postal_code' => undef,
+        'state' => undef
+      },
+      'avs_postal_match' => undef,
+      'avs_result' => undef,
+      'avs_street_match' => undef,
+      'bank_name' => 'BANK OF HAWAII',
+      'brand' => 'MasterCard',
+      'can_credit' => 0,
+      'can_debit' => 1,
+      'category' => 'other',
+      'created_at' => '2014-09-21T05:55:17.564617Z',
+      'cvv' => undef,
+      'cvv_match' => undef,
+      'cvv_result' => undef,
+      'expiration_month' => 12,
+      'expiration_year' => 2020,
+      'fingerprint' => 'fc4c',
+      'is_verified' => $VAR1->{'cards'}[0]{'can_debit'},
+      'links' => { 'customer' => undef },
+      'meta' => {},
+      'name' => undef,
+      'number' => 'xxxxxxxxxxxx5100',
+      'type' => 'credit',
+      'updated_at' => '2014-09-21T05:55:17.564619Z'
     }
 
 =head2 create_card
 
+    create_card($card)
+
 Creates a card.
 Returns the card card that was created.
 
-    create_card({
+Example:
+
+    my $card = $bp->create_card({
         number           => '5105105105105100',
         expiration_month => 12,
         expiration_year  => 2020,
-    })
+    });
 
 =head2 add_card
 
@@ -300,6 +350,235 @@ Example:
 
     my $hold = $bp->get_hold($hold_id);
     my $voided_hold = $bp->void_hold($hold);
+
+=head2 get_debit
+
+    get_debit($id)
+
+Returns the debit for the given id.
+
+Example response:
+
+    {
+      'amount' => 123,
+      'appears_on_statement_as' => 'BAL*Tilt.com',
+      'created_at' => '2014-10-06T05:01:39.045336Z',
+      'currency' => 'USD',
+      'description' => undef,
+      'failure_reason' => undef,
+      'failure_reason_code' => undef,
+      'href' => '/debits/WD6F5x4VpYx4hfB02tGIqNU1',
+      'id' => 'WD6F5x4VpYx4hfB02tGIqNU1',
+      'links' => {
+        'card_hold' => 'HL6F4q5kJGxt1ftH8vgZZJkh',
+        'customer' => undef,
+        'dispute' => undef,
+        'order' => undef,
+        'source' => 'CC6DFWepK7eeL03cZ06Sb9Xf'
+      },
+      'meta' => {},
+      'status' => 'succeeded',
+      'transaction_number' => 'WAVD-B0K-R7TX',
+      'updated_at' => '2014-10-06T05:01:39.542306Z'
+    }
+
+=head2 create_debit
+
+    create_debit($debit, card => $card)
+
+Debits a card.
+The C<$debit> hashref must contain an amount.
+The card param is a hashref such as one returned from L</get_card>.
+Returns the created debit.
+
+Example:
+
+    my $card = $bp->get_card($card_id);
+    my $debit = $bp->create_debit({ amount => 123 }, card => $card);
+
+=head2 refund_debit
+
+    refund_debit($debit)
+
+Refunds a debit.
+Returnds the refund.
+
+Example:
+
+    my $debit = $bp->get_debit($debit_id);
+    my $refund = $bp->refund_debit($debit);
+
+Example response:
+
+    {
+      'amount' => 123,
+      'created_at' => '2014-10-06T04:57:44.959806Z',
+      'currency' => 'USD',
+      'description' => undef,
+      'href' => '/refunds/RF2pO6Fz8breGs2TAIpfE2nr',
+      'id' => 'RF2pO6Fz8breGs2TAIpfE2nr',
+      'links' => {
+        'debit' => 'WD2hQV9COFX0aPMSIzyeAuAg',
+        'dispute' => undef,
+        'order' => undef
+      },
+      'meta' => {},
+      'status' => 'succeeded',
+      'transaction_number' => 'RFRGL-EU1-A39B',
+      'updated_at' => '2014-10-06T04:57:48.161218Z'
+    }
+
+=head2 get_bank_account
+
+    get_bank_account($id)
+
+Returns the bank account for the given id.
+
+Example response:
+
+    {
+      'account_number' => 'xxxxxxxx6789',
+      'account_type' => 'checking',
+      'address' => {
+        'city' => undef,
+        'country_code' => 'USA',
+        'line1' => '123 Abc St',
+        'line2' => undef,
+        'postal_code' => '94103',
+        'state' => undef
+      },
+      'bank_name' => '',
+      'can_credit' => bless( do{\(my $o = 1)}, 'JSON::XS::Boolean' ),
+      'can_debit' => bless( do{\(my $o = 0)}, 'JSON::XS::Boolean' ),
+      'created_at' => '2014-10-06T06:40:14.649386Z',
+      'fingerprint' => 'cc552495fc90556293db500b985bacc918d9fb4d37b42052adf64',
+      'href' => '/bank_accounts/BA4TAWvO3d3J14i6BdjJUZsp',
+      'id' => 'BA4TAWvO3d3J14i6BdjJUZsp',
+      'links' => {
+        'bank_account_verification' => undef,
+        'customer' => undef
+      },
+      'meta' => {},
+      'name' => 'Bob Smith',
+      'routing_number' => '110000000',
+      'updated_at' => '2014-10-06T06:40:14.649388Z'
+    }
+
+=head2 create_bank_account
+
+    create_bank_account($bank)
+
+Creates a bank account.
+Returns the bank account that was created.
+
+Example:
+
+    my $bank = $bp->create_bank_account({
+        account_number => '000123456789',
+        acount_type    => 'checking',
+        name           => 'Bob Smith',
+        routing_number => '110000000',
+        address => {
+            line1       => '123 Abc St',
+            postal_code => '94103',
+        },
+    });
+
+=head2 get_credit
+
+    get_credit($id)
+
+Returns the credit for the given id.
+
+Example response:
+
+    {
+      'amount' => 123,
+      'appears_on_statement_as' => 'Tilt.com',
+      'created_at' => '2014-10-06T06:52:00.522212Z',
+      'currency' => 'USD',
+      'description' => undef,
+      'failure_reason' => undef,
+      'failure_reason_code' => undef,
+      'href' => '/credits/CR27ns5sg1FFgHsGy5VEhowd',
+      'id' => 'CR27ns5sg1FFgHsGy5VEhowd',
+      'links' => {
+        'customer' => undef,
+        'destination' => 'BA26JfFfg1vqrCoXPzSSxtKg',
+        'order' => undef
+      },
+      'meta' => {},
+      'status' => 'succeeded',
+      'transaction_number' => 'CR4F7-4XQ-JLDG',
+      'updated_at' => '2014-10-06T06:52:03.558485Z'
+    }
+
+=head2 create_credit
+
+    create_credit($credit, bank_account => $bank)
+    create_credit($credit, card => $card)
+
+Sends money to a bank account or a credit card.
+The C<$credit> hashref must contain an amount.
+A bank_account or card param is required.
+Returns the created credit.
+
+Example:
+
+    my $bank = $bp->get_bank_account($bank_account_id);
+    my $credit = $bp->create_credit({ amount => 123 }, bank_account => $bank);
+
+=head2 get_bank_verification
+
+    get_bank_verification($id)
+
+Gets a bank account verification.
+
+Example response:
+
+    {
+      'attempts' => 0,
+      'attempts_remaining' => 3,
+      'created_at' => '2014-10-06T08:01:59.972034Z',
+      'deposit_status' => 'succeeded',
+      'href' => '/verifications/BZnWun9Itq7FVtj1nludGjC',
+      'id' => 'BZnWun9Itq7FVtj1nludGjC',
+      'links' => {
+        'bank_account' => 'BAdFCPv3GkIlXEWQrdTyIW9'
+      },
+      'meta' => {},
+      'updated_at' => '2014-10-06T08:02:00.268756Z',
+      'verification_status' => 'pending'
+    }
+
+=head2 create_bank_verification
+
+    create_bank_verification(bank_account => $bank)
+
+Create a new bank account verification.
+This initiates the process of sending micro deposits to the bank account which
+will be used to verify bank account ownership.
+A bank_account param is required.
+Returns the created bank account verification.
+
+Example:
+
+    my $bank = $bp->get_bank_account($bank_account_id);
+    my $verification = $bp->create_bank_verification(bank_account => $bank);
+
+=head2 confirm_bank_verification
+
+    confirm_bank_verification($verification,
+        amount_1 => $amount_1, amount_2 => $amount_2);
+
+Confirm the trial deposit amounts that were sent to the bank account.
+Returns the bank account verification.
+
+Example:
+
+    my $ver = $bp->get_bank_account($bank_account_id);
+    $verification =
+        $bp->confirm_bank_verification($ver, amount_1 => 1, amount_2 => 2);
 
 =cut
 

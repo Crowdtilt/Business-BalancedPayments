@@ -91,12 +91,6 @@ sub capture_hold {
     return $self->post($self->_uri('debits'), $data);
 }
 
-sub get_debit {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri('debits', $id));
-}
-
 sub create_debit {
     my ($self, $debit, %args) = @_;
     croak 'The debit param must be a hashref' unless ref $debit eq 'HASH';
@@ -151,12 +145,6 @@ sub refund_debit {
     return $self->post($self->_uri('refunds'), $debit);
 }
 
-sub get_bank_account {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri('bank_accounts', $id));
-}
-
 sub confirm_bank_verification {
     my ($self, $id, %args) = @_;
     my $verification_id = $args{verification_id};
@@ -167,12 +155,6 @@ sub confirm_bank_verification {
     my $amount_1 = $args{amount_1} or croak 'The amount_1 param is missing';
     my $amount_2 = $args{amount_2} or croak 'The amount_2 param is missing';
     return $self->put($uri => {amount_1 => $amount_1, amount_2 => $amount_2});
-}
-
-sub create_bank_account {
-    my ($self, $bank) = @_;
-    croak 'The bank account must be a hashref' unless ref $bank eq 'HASH';
-    return $self->post($self->_uri('bank_accounts'), $bank);
 }
 
 sub create_bank_verification {
@@ -195,12 +177,6 @@ sub invalidate_bank_account {
     my ($self, $bank_id) = @_;
     croak 'A bank id is required' unless defined $bank_id;
     return $self->update_bank_account({ id => $bank_id, is_valid => 0 });
-}
-
-sub get_credit {
-    my ($self, $id) = @_;
-    croak 'The id param is missing' unless defined $id;
-    return $self->get($self->_uri('credits', $id));
 }
 
 sub create_credit {
