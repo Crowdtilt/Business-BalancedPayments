@@ -4,7 +4,7 @@ Business::BalancedPayments - Balanced Payments API bindings
 
 # VERSION
 
-version 1.0000
+version 1.0100
 
 # SYNOPSIS
 
@@ -64,6 +64,7 @@ See [WebService::Client](http://search.cpan.org/perldoc?WebService::Client) for 
 
 # AUTHORS
 
+- Ali Anari <ali@tilt.com>
 - Khaled Hussein <khaled@tilt.com>
 - Naveed Massjouni <naveed@tilt.com>
 - Al Newkirk <al@tilt.com>

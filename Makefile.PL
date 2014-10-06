@@ -11,7 +11,7 @@ use ExtUtils::MakeMaker ;
 
 my %WriteMakefileArgs = (
   "ABSTRACT" => "Balanced Payments API bindings",
-  "AUTHOR" => "Khaled Hussein <khaled\@tilt.com>, Naveed Massjouni <naveed\@tilt.com>, Al Newkirk <al\@tilt.com>, Will Wolf <will\@tilt.com>",
+  "AUTHOR" => "Ali Anari <ali\@tilt.com>, Khaled Hussein <khaled\@tilt.com>, Naveed Massjouni <naveed\@tilt.com>, Al Newkirk <al\@tilt.com>, Will Wolf <will\@tilt.com>",
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => 0
   },
@@ -40,7 +40,7 @@ my %WriteMakefileArgs = (
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "1.0000",
+  "VERSION" => "1.0100",
   "test" => {
     "TESTS" => "t/*.t"
   }
