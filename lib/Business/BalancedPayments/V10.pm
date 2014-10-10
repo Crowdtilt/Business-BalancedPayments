@@ -2,6 +2,8 @@ package Business::BalancedPayments::V10;
 use Moo;
 with 'Business::BalancedPayments::Base';
 
+# VERSION
+
 use Carp qw(croak);
 
 has marketplaces_uri => ( is => 'ro', default => '/v1/marketplaces' );

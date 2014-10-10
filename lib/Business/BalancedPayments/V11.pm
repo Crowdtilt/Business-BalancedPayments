@@ -2,6 +2,8 @@ package Business::BalancedPayments::V11;
 use Moo;
 with 'Business::BalancedPayments::Base';
 
+# VERSION
+
 use Carp qw(croak);
 use Method::Signatures;
 

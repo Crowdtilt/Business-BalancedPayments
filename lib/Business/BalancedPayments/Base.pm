@@ -2,6 +2,8 @@ package Business::BalancedPayments::Base;
 use Moo::Role;
 with 'WebService::Client';
 
+# VERSION
+
 use Carp qw(croak);
 use HTTP::Request::Common qw(GET POST);
 use JSON qw(encode_json);
