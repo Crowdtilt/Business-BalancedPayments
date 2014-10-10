@@ -67,6 +67,13 @@ around get_bank_account => _unpack_response('bank_accounts');
 
 around create_bank_account => _unpack_response('bank_accounts');
 
+method add_bank_account(HashRef $bank, HashRef :$customer!) {
+    my $bank_href = $bank->{href} or croak 'The bank href is missing';
+    my $cust_href = $customer->{href} or croak 'The customer href is missing';
+    my $res = $self->put($bank->{href}, { customer => $cust_href });
+    return $res->{bank_accounts}[0];
+}
+
 method create_credit(HashRef $credit, HashRef :$bank_account, HashRef :$card) {
     croak 'The credit amount is missing' unless $credit->{amount};
     if ($bank_account) {
@@ -483,6 +490,19 @@ Example:
             postal_code => '94103',
         },
     });
+
+=head2 add_bank_account
+
+    add_bank_account($bank, customer => $customer)
+
+Associates a bank account to the given customer.
+Returns the bank account.
+
+Example:
+
+    my $bank = $bp->add_bank_account($bank_id);
+    my $customer = $bp->get_customer($customer_id);
+    $bank = $bp->add_bank_account($bank, customer => $customer);
 
 =head2 get_credit
 
