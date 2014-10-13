@@ -5,15 +5,18 @@ skip_unless_has_secret;
 
 my $bp = bp_v11;
 
-my $cust1 = $bp->create_customer;
-ok ref $cust1 eq 'HASH', 'created a customer with no params';
-$cust1 = $bp->create_customer({ email => 'foo@bar.com' });
-ok ref $cust1 eq 'HASH', 'created a customer with email';
-ok $cust1->{id};
+my $cust = $bp->create_customer;
+ok ref $cust eq 'HASH', 'created a customer with no params';
+$cust = $bp->create_customer({ email => 'foo@bar.com' });
+is $cust->{email} => 'foo@bar.com';
+ok my $cust_id = $cust->{id};
 
-my $cust2 = $bp->get_customer( $cust1->{id} );
-ok ref $cust2 eq 'HASH', 'got the customer';
-is $cust2->{id} => $cust1->{id}, 'got correct customer';
-is $cust2->{email} => 'foo@bar.com', 'got correct email';
+$cust->{email} = 'poo@bar.com';
+$bp->update_customer($cust);
+is $cust->{email} => 'poo@bar.com';
+is $cust->{id} => $cust_id;
+
+$cust = $bp->get_customer($cust_id);
+is $cust->{email} => 'poo@bar.com';
 
 done_testing;

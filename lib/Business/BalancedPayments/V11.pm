@@ -31,6 +31,11 @@ around get_customer => _unpack_response('customers');
 
 around create_customer => _unpack_response('customers');
 
+method update_customer(HashRef $customer) {
+    my $cust_href = $customer->{href} or croak 'The customer href is missing';
+    return $self->put($cust_href, $customer)->{bank_accounts}[0];
+}
+
 method get_hold(Str $id) {
     my $res = $self->get($self->_uri('card_holds', $id));
     return $res ? $res->{card_holds}[0] : undef;

@@ -4,7 +4,7 @@ Business::BalancedPayments - Balanced Payments API bindings
 
 # VERSION
 
-version 1.0200
+version 1.0300
 
 # SYNOPSIS
 
@@ -40,7 +40,7 @@ a uri. For example, the following two lines are equivalent:
     $bp->get_card('CC6J123');
     $bp->get_card('/cards/CC6J123');
 
-## create
+## client
 
     my $bp = Business::BalancedPayments->client(
         secret  => $secret,
@@ -186,6 +186,19 @@ Returns the customer.
 Example:
 
     $bp->create_customer({ name => 'Bob', email => 'bob@foo.com' });
+
+## update\_customer
+
+    update_customer($customer)
+
+Updates a customer.
+Returns the updated customer.
+
+Example:
+
+    my $customer = $bp->get_customer($customer_id);
+    $customer->{email} = 'sue@foo.com';
+    $bp->update_customer($customer);
 
 ## get\_hold
 
