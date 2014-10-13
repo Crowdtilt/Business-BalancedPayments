@@ -12,7 +12,7 @@ is $cust->{email} => 'foo@bar.com';
 ok my $cust_id = $cust->{id};
 
 $cust->{email} = 'poo@bar.com';
-$bp->update_customer($cust);
+$cust = $bp->update_customer($cust);
 is $cust->{email} => 'poo@bar.com';
 is $cust->{id} => $cust_id;
 
