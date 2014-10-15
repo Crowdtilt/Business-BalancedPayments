@@ -131,6 +131,19 @@ method create_check_recipient(HashRef $rec) {
     return $res->{check_recipients}[0];
 }
 
+method get_dispute(Str $id) {
+    my $res = $self->get($self->_uri('disputes', $id));
+    return $res ? $res->{disputes}[0] : undef;
+}
+
+method get_disputes(Int :$limit, Int :$offset) {
+    my $res = $self->get($self->_uri('disputes'), {
+        (limit  => $limit ) x!! $limit,
+        (offset => $offset) x!! $offset,
+    });
+    return $res ? $res->{disputes} : undef;
+}
+
 method create_check_recipient_credit(HashRef $credit, HashRef :$check_recipient!) {
     my $rec_id = $check_recipient->{id}
         or croak 'The check_recipient hashref needs an id';
