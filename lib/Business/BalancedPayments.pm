@@ -532,6 +532,84 @@ Example:
     $verification =
         $bp->confirm_bank_verification($ver, amount_1 => 1, amount_2 => 2);
 
+=head2 get_disputes
+
+    get_disputes(
+        $start_date => '2014-01-01T12:00:00',
+        $end_date   => DateTime->now,
+        $limit      => 10,
+        $offset     => 0,
+    )
+
+Lists all disputes (chargebacks).
+All of the parameters are optional.
+The C<$start_date> and C<$end_date> parameters can either be DateTime objects, or
+ISO8601 formatted strings.
+The C<$limit> and C<$offset> parameters must be valid integers.
+
+Example response:
+
+    [
+        {
+            amount          => 6150,
+            created_at      => '2013-12-06T02:05:13.656744Z',
+            currency        => 'USD',
+            href            => '/disputes/DT1234567890',
+            id              => 'DT1234567890',
+            initiated_at    => '2013-09-11T00:00:00Z',
+            links           => {
+                transaction => 'WD1234567890'
+            },
+            meta       => {},
+            reason     => 'clerical',
+            respond_by => '2013-10-15T00:00:00Z',
+            status     => 'lost',
+            updated_at => '2013-12-06T20:59:33.884181Z'
+        },
+        {
+            amount          => 10250,
+            created_at      => '2013-12-06T01:55:28.882064Z',
+            currency        => 'USD',
+            href            => '/disputes/DT0987654321',
+            id              => 'DT0987654321',
+            initiated_at    => '2013-08-28T00:00:00Z',
+            links           => {
+                transaction => 'WD0987654321'
+            },
+            meta       => {},
+            reason     => 'clerical',
+            respond_by => '2013-10-02T00:00:00Z',
+            status     => 'lost',
+            updated_at => '2013-12-06T21:04:11.158050Z'
+        }
+    ]
+
+=head2 get_dispute
+
+    get_dispute('DT1234567890')
+
+Fetches a dispute (chargeback).
+The C<$id> of the dispute is a required parameter.
+
+Example response:
+
+    {
+        amount          => 6150,
+        created_at      => '2013-12-06T02:05:13.656744Z',
+        currency        => 'USD',
+        href            => '/disputes/DT1234567890',
+        id              => 'DT1234567890',
+        initiated_at    => '2013-09-11T00:00:00Z',
+        links           => {
+            transaction => 'WD1234567890'
+        },
+        meta       => {},
+        reason     => 'clerical',
+        respond_by => '2013-10-15T00:00:00Z',
+        status     => 'lost',
+        updated_at => '2013-12-06T20:59:33.884181Z'
+    }
+
 =cut
 
 1;
