@@ -4,7 +4,7 @@ Business::BalancedPayments - Balanced Payments API bindings
 
 # VERSION
 
-version 1.0301
+version 1.0400
 
 # SYNOPSIS
 
@@ -32,7 +32,7 @@ This module provides bindings for the
 
 The client methods documented here are for v1.1 of the Balanced API
 [https://docs.balancedpayments.com/1.1/api](https://docs.balancedpayments.com/1.1/api).
-See [Business::BalancedPayments::V10](http://search.cpan.org/perldoc?Business::BalancedPayments::V10) for the v1.0 methods.
+See [Business::BalancedPayments::V10](https://metacpan.org/pod/Business::BalancedPayments::V10) for the v1.0 methods.
 
 For the `get_*` methods, the `$id` param can be the id of the resource or
 a uri. For example, the following two lines are equivalent:
@@ -62,7 +62,7 @@ Parameters:
     The only supported versions currently are `'1.0'` and `'1.1'`.
     Note that version `'1.0'` was officially deprecated March 2014. 
 
-See [WebService::Client](http://search.cpan.org/perldoc?WebService::Client) for other supported parameters such as `logger`,
+See [WebService::Client](https://metacpan.org/pod/WebService::Client) for other supported parameters such as `logger`,
 `retries`, and `timeout`.
 
 ## get\_card
@@ -128,8 +128,8 @@ Example:
     add_card($card, customer => $customer);
 
 Associates a card with a customer.
-It expects a card hashref, such as one returned by ["get\_card"](#get\_card),
-and a customer hashref, such as one returned by ["get\_customer"](#get\_customer).
+It expects a card hashref, such as one returned by ["get\_card"](#get_card),
+and a customer hashref, such as one returned by ["get\_customer"](#get_customer).
 Returns the card.
 
 Example:
@@ -236,7 +236,7 @@ Example response:
 
 Creates a card hold.
 The `$hold_data` hashref must contain an amount.
-The card param is a hashref such as one returned from ["get\_card"](#get\_card).
+The card param is a hashref such as one returned from ["get\_card"](#get_card).
 Returns the created hold.
 
 ## capture\_hold
@@ -311,7 +311,7 @@ Example response:
 
 Debits a card.
 The `$debit` hashref must contain an amount.
-The card param is a hashref such as one returned from ["get\_card"](#get\_card).
+The card param is a hashref such as one returned from ["get\_card"](#get_card).
 Returns the created debit.
 
 Example:
@@ -515,6 +515,84 @@ Example:
     my $ver = $bp->get_bank_account($bank_account_id);
     $verification =
         $bp->confirm_bank_verification($ver, amount_1 => 1, amount_2 => 2);
+
+## get\_disputes
+
+    get_disputes(
+        $start_date => '2014-01-01T12:00:00',
+        $end_date   => DateTime->now,
+        $limit      => 10,
+        $offset     => 0,
+    )
+
+Lists all disputes (chargebacks).
+All of the parameters are optional.
+The `$start_date` and `$end_date` parameters can either be DateTime objects, or
+ISO8601 formatted strings.
+The `$limit` and `$offset` parameters must be valid integers.
+
+Example response:
+
+    [
+        {
+            amount          => 6150,
+            created_at      => '2013-12-06T02:05:13.656744Z',
+            currency        => 'USD',
+            href            => '/disputes/DT1234567890',
+            id              => 'DT1234567890',
+            initiated_at    => '2013-09-11T00:00:00Z',
+            links           => {
+                transaction => 'WD1234567890'
+            },
+            meta       => {},
+            reason     => 'clerical',
+            respond_by => '2013-10-15T00:00:00Z',
+            status     => 'lost',
+            updated_at => '2013-12-06T20:59:33.884181Z'
+        },
+        {
+            amount          => 10250,
+            created_at      => '2013-12-06T01:55:28.882064Z',
+            currency        => 'USD',
+            href            => '/disputes/DT0987654321',
+            id              => 'DT0987654321',
+            initiated_at    => '2013-08-28T00:00:00Z',
+            links           => {
+                transaction => 'WD0987654321'
+            },
+            meta       => {},
+            reason     => 'clerical',
+            respond_by => '2013-10-02T00:00:00Z',
+            status     => 'lost',
+            updated_at => '2013-12-06T21:04:11.158050Z'
+        }
+    ]
+
+## get\_dispute
+
+    get_dispute('DT1234567890')
+
+Fetches a dispute (chargeback).
+The `$id` of the dispute is a required parameter.
+
+Example response:
+
+    {
+        amount          => 6150,
+        created_at      => '2013-12-06T02:05:13.656744Z',
+        currency        => 'USD',
+        href            => '/disputes/DT1234567890',
+        id              => 'DT1234567890',
+        initiated_at    => '2013-09-11T00:00:00Z',
+        links           => {
+            transaction => 'WD1234567890'
+        },
+        meta       => {},
+        reason     => 'clerical',
+        respond_by => '2013-10-15T00:00:00Z',
+        status     => 'lost',
+        updated_at => '2013-12-06T20:59:33.884181Z'
+    }
 
 # AUTHORS
 
