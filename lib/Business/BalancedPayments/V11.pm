@@ -6,6 +6,7 @@ with 'Business::BalancedPayments::Base';
 
 use Carp qw(croak);
 use Method::Signatures;
+use Scalar::Util qw(blessed);
 
 has marketplaces_uri => ( is => 'ro', default => '/marketplaces' );
 
@@ -136,11 +137,21 @@ method get_dispute(Str $id) {
     return $res ? $res->{disputes}[0] : undef;
 }
 
-method get_disputes(Int :$limit, Int :$offset) {
-    my $res = $self->get($self->_uri('disputes'), {
-        (limit  => $limit ) x!! $limit,
-        (offset => $offset) x!! $offset,
-    });
+method get_disputes(
+    Defined :$start_date,
+    Defined :$end_date,
+    Int     :$limit,
+    Int     :$offset
+) {
+    my %params = (
+        ( limit  => $limit  ) x!! $limit,
+        ( offset => $offset ) x!! $offset,
+    );
+
+    $params{'created_at[>]'} = "$start_date" if $start_date;
+    $params{'created_at[<]'} = "$end_date" if $end_date;
+
+    my $res = $self->get($self->_uri('disputes'), \%params);
     return $res ? $res->{disputes} : undef;
 }
 
