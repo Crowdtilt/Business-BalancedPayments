@@ -4,7 +4,7 @@ Business::BalancedPayments - Balanced Payments API bindings
 
 # VERSION
 
-version 1.0400
+version 1.0401
 
 # SYNOPSIS
 
@@ -32,7 +32,7 @@ This module provides bindings for the
 
 The client methods documented here are for v1.1 of the Balanced API
 [https://docs.balancedpayments.com/1.1/api](https://docs.balancedpayments.com/1.1/api).
-See [Business::BalancedPayments::V10](https://metacpan.org/pod/Business::BalancedPayments::V10) for the v1.0 methods.
+See [Business::BalancedPayments::V10](http://search.cpan.org/perldoc?Business::BalancedPayments::V10) for the v1.0 methods.
 
 For the `get_*` methods, the `$id` param can be the id of the resource or
 a uri. For example, the following two lines are equivalent:
@@ -62,7 +62,7 @@ Parameters:
     The only supported versions currently are `'1.0'` and `'1.1'`.
     Note that version `'1.0'` was officially deprecated March 2014. 
 
-See [WebService::Client](https://metacpan.org/pod/WebService::Client) for other supported parameters such as `logger`,
+See [WebService::Client](http://search.cpan.org/perldoc?WebService::Client) for other supported parameters such as `logger`,
 `retries`, and `timeout`.
 
 ## get\_card
@@ -128,8 +128,8 @@ Example:
     add_card($card, customer => $customer);
 
 Associates a card with a customer.
-It expects a card hashref, such as one returned by ["get\_card"](#get_card),
-and a customer hashref, such as one returned by ["get\_customer"](#get_customer).
+It expects a card hashref, such as one returned by ["get\_card"](#get\_card),
+and a customer hashref, such as one returned by ["get\_customer"](#get\_customer).
 Returns the card.
 
 Example:
@@ -236,7 +236,7 @@ Example response:
 
 Creates a card hold.
 The `$hold_data` hashref must contain an amount.
-The card param is a hashref such as one returned from ["get\_card"](#get_card).
+The card param is a hashref such as one returned from ["get\_card"](#get\_card).
 Returns the created hold.
 
 ## capture\_hold
@@ -311,7 +311,7 @@ Example response:
 
 Debits a card.
 The `$debit` hashref must contain an amount.
-The card param is a hashref such as one returned from ["get\_card"](#get_card).
+The card param is a hashref such as one returned from ["get\_card"](#get\_card).
 Returns the created debit.
 
 Example:
