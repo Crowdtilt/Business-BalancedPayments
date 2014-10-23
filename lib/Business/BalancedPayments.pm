@@ -534,55 +534,71 @@ Example:
 
 =head2 get_disputes
 
-    get_disputes(
+    get_disputes({
         $start_date => '2014-01-01T12:00:00',
         $end_date   => DateTime->now,
         $limit      => 10,
         $offset     => 0,
-    )
+    })
 
 Lists all disputes (chargebacks).
-All of the parameters are optional.
+All of the parameters are optional and must be passed inside of a HashRef.
 The C<$start_date> and C<$end_date> parameters can either be DateTime objects, or
 ISO8601 formatted strings.
 The C<$limit> and C<$offset> parameters must be valid integers.
 
 Example response:
 
-    [
-        {
-            amount          => 6150,
-            created_at      => '2013-12-06T02:05:13.656744Z',
-            currency        => 'USD',
-            href            => '/disputes/DT1234567890',
-            id              => 'DT1234567890',
-            initiated_at    => '2013-09-11T00:00:00Z',
-            links           => {
-                transaction => 'WD1234567890'
+    {
+        disputes => [
+            {
+                amount          => 6150,
+                created_at      => '2013-12-06T02:05:13.656744Z',
+                currency        => 'USD',
+                href            => '/disputes/DT1234567890',
+                id              => 'DT1234567890',
+                initiated_at    => '2013-09-11T00:00:00Z',
+                links           => {
+                    transaction => 'WD1234567890'
+                },
+                meta       => {},
+                reason     => 'clerical',
+                respond_by => '2013-10-15T00:00:00Z',
+                status     => 'lost',
+                updated_at => '2013-12-06T20:59:33.884181Z'
             },
-            meta       => {},
-            reason     => 'clerical',
-            respond_by => '2013-10-15T00:00:00Z',
-            status     => 'lost',
-            updated_at => '2013-12-06T20:59:33.884181Z'
+            {
+                amount          => 10250,
+                created_at      => '2013-12-06T01:55:28.882064Z',
+                currency        => 'USD',
+                href            => '/disputes/DT0987654321',
+                id              => 'DT0987654321',
+                initiated_at    => '2013-08-28T00:00:00Z',
+                links           => {
+                    transaction => 'WD0987654321'
+                },
+                meta       => {},
+                reason     => 'clerical',
+                respond_by => '2013-10-02T00:00:00Z',
+                status     => 'lost',
+                updated_at => '2013-12-06T21:04:11.158050Z'
+            }
+        ],
+        links => {
+            disputes.events      => '/disputes/{disputes.id}/events',
+            disputes.transaction => '/resources/{disputes.transaction}',
         },
-        {
-            amount          => 10250,
-            created_at      => '2013-12-06T01:55:28.882064Z',
-            currency        => 'USD',
-            href            => '/disputes/DT0987654321',
-            id              => 'DT0987654321',
-            initiated_at    => '2013-08-28T00:00:00Z',
-            links           => {
-                transaction => 'WD0987654321'
-            },
-            meta       => {},
-            reason     => 'clerical',
-            respond_by => '2013-10-02T00:00:00Z',
-            status     => 'lost',
-            updated_at => '2013-12-06T21:04:11.158050Z'
+        meta {
+            first    => '/disputes?limit=10&offset=0',
+            href     => '/disputes?limit=10&offset=0',
+            last     => '/disputes?limit=10&offset=300',
+            limit    => 10,
+            next     => '/disputes?limit=10&offset=10',
+            offset   => 0,
+            previous => undef,
+            total    => 100
         }
-    ]
+    }
 
 =head2 get_dispute
 
