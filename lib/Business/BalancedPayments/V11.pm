@@ -149,6 +149,17 @@ method create_check_recipient_credit(HashRef $credit, HashRef :$check_recipient!
     return $res->{credits}[0];
 }
 
+method get_all(HashRef $data) {
+    my ($key) = grep !/^(links|meta)$/, keys %$data;
+    croak "Could not find the top level resource" unless $key;
+    my $result = $data->{$key};
+    while ( my $next = $data->{meta}{next} ) {
+        $data = $self->get($next);
+        push @$result, @{ $data->{$key} };
+    }
+    return $result;
+}
+
 method _build_marketplaces { $self->get($self->marketplaces_uri) }
 
 method _build_marketplace { $self->marketplaces->{marketplaces}[0] }
