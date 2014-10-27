@@ -58,10 +58,12 @@ method void_hold(HashRef $hold) {
     return $self->put($hold_href, { is_void => 'true' })->{card_holds}[0];
 }
 
-method create_debit(HashRef $debit, HashRef :$card!) {
+method create_debit(HashRef $debit, HashRef :$card, HashRef :$bank) {
+    my $source = $card || $bank or croak 'A bank or card is required';
     croak 'The debit amount is missing' unless $debit->{amount};
-    my $card_href = $card->{href} or croak 'The card href is missing';
-    return $self->post("$card_href/debits", $debit)->{debits}[0];
+    my $source_href = $source->{href}
+        or croak 'The href for the funding source is missing';
+    return $self->post("$source_href/debits", $debit)->{debits}[0];
 }
 
 around get_debit => _unpack_response('debits');
