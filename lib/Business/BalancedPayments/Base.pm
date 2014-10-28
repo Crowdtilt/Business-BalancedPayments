@@ -79,6 +79,11 @@ sub log {
     $self->logger->DEBUG("BP: $msg");
 }
 
+sub next {
+    my ($self, $thing) = @_;
+    return $self->get( $thing->{meta}{next} );
+}
+
 sub _uri {
     my ($self, $key, $id) = @_;
     return $id if $id and $id =~ /\//; # in case a uri was passed in
