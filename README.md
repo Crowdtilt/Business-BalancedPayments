@@ -4,7 +4,7 @@ Business::BalancedPayments - Balanced Payments API bindings
 
 # VERSION
 
-version 1.0402
+version 1.0500
 
 # SYNOPSIS
 

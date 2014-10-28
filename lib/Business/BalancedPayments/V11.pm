@@ -6,7 +6,6 @@ with 'Business::BalancedPayments::Base';
 
 use Carp qw(croak);
 use Method::Signatures;
-use Scalar::Util qw(blessed);
 
 has marketplaces_uri => ( is => 'ro', default => '/marketplaces' );
 
@@ -141,6 +140,8 @@ method get_disputes(HashRef $query = {}) {
     return $self->get($self->_uri('disputes'), $query);
 }
 
+around get_disputes => _autopaginate();
+
 method create_check_recipient_credit(HashRef $credit, HashRef :$check_recipient!) {
     my $rec_id = $check_recipient->{id}
         or croak 'The check_recipient hashref needs an id';
@@ -149,15 +150,16 @@ method create_check_recipient_credit(HashRef $credit, HashRef :$check_recipient!
     return $res->{credits}[0];
 }
 
-method get_all(HashRef $data) {
+method get_all(HashRef $data, Maybe[CodeRef] :$page_handler) {
     my ($key) = grep !/^(links|meta)$/, keys %$data;
     croak "Could not find the top level resource" unless $key;
     my $result = $data->{$key};
     while ( my $next = $data->{meta}{next} ) {
         $data = $self->get($next);
+        $page_handler->( $data ) if $page_handler;
         push @$result, @{ $data->{$key} };
     }
-    return $result;
+    return { $key => $result };
 }
 
 method _build_marketplaces { $self->get($self->marketplaces_uri) }
@@ -175,6 +177,16 @@ sub _unpack_response {
         my ($orig, $self, @args) = @_;
         my $res = $self->$orig(@args);
         return $res->{$name}[0] if $res;
+        return $res;
+    }
+};
+
+sub _autopaginate {
+    return sub {
+        my ($orig, $self, $query, %params) = @_;
+        my $res = $self->$orig($query);
+        return $self->get_all($res, page_handler => $params{page_handler})
+            if $params{page_handler} and 'CODE' eq ref $params{page_handler};
         return $res;
     }
 };

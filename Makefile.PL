@@ -26,7 +26,6 @@ my %WriteMakefileArgs = (
     "Method::Signatures" => 0,
     "Moo" => 0,
     "Moo::Role" => 0,
-    "Scalar::Util" => 0,
     "WebService::Client" => "0.0001"
   },
   "TEST_REQUIRES" => {
@@ -41,7 +40,7 @@ my %WriteMakefileArgs = (
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "1.0402",
+  "VERSION" => "1.0500",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -60,7 +59,6 @@ my %FallbackPrereqs = (
   "Method::Signatures" => 0,
   "Moo" => 0,
   "Moo::Role" => 0,
-  "Scalar::Util" => 0,
   "Test::Mock::LWP::Dispatch" => 0,
   "Test::Modern" => 0,
   "Test::More" => 0,
