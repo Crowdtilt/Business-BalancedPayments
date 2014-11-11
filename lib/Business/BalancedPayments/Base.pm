@@ -1,5 +1,5 @@
 package Business::BalancedPayments::Base;
-use Moo::Role;
+use Moo;
 with 'WebService::Client';
 
 # VERSION
@@ -7,8 +7,6 @@ with 'WebService::Client';
 use Carp qw(croak);
 use HTTP::Request::Common qw(GET POST);
 use JSON qw(encode_json);
-
-requires qw(_build_marketplace _build_uris);
 
 has '+base_url' => (is => 'ro', default => 'https://api.balancedpayments.com');
 
@@ -18,11 +16,10 @@ has uris => (is => 'ro', lazy => 1, builder => '_build_uris' );
 
 has marketplace => (is => 'ro', lazy => 1, builder => '_build_marketplace');
 
-around req => sub {
-    my ($orig, $self, $req, @rest) = @_;
-    $req->authorization_basic($self->secret);
-    return $self->$orig($req, @rest);
-};
+sub BUILD {
+    my ($self) = @_;
+    $self->ua->default_headers->authorization_basic($self->secret, '');
+}
 
 sub get_card {
     my ($self, $id) = @_;

@@ -1,6 +1,6 @@
 package Business::BalancedPayments::V10;
 use Moo;
-with 'Business::BalancedPayments::Base';
+extends 'Business::BalancedPayments::Base';
 
 # VERSION
 
