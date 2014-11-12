@@ -1,6 +1,6 @@
 package Business::BalancedPayments::V11;
 use Moo;
-with 'Business::BalancedPayments::Base';
+extends 'Business::BalancedPayments::Base';
 
 # VERSION
 
@@ -11,8 +11,7 @@ has marketplaces_uri => ( is => 'ro', default => '/marketplaces' );
 
 has marketplaces => ( is => 'ro', lazy => 1, builder => '_build_marketplaces' );
 
-sub BUILD {
-    my ($self) = @_;
+method BUILD(@args) {
     $self->ua->default_header(
         accept => 'application/vnd.api+json;revision=1.1');
 }
