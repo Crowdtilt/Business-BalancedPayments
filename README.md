@@ -4,7 +4,7 @@ Business::BalancedPayments - Balanced Payments API bindings
 
 # VERSION
 
-version 1.0500
+version 1.0600
 
 # SYNOPSIS
 
@@ -308,10 +308,12 @@ Example response:
 ## create\_debit
 
     create_debit($debit, card => $card)
+    create_debit($debit, bank => $bank)
 
-Debits a card.
+Debits a card or a bank.
 The `$debit` hashref must contain an amount.
 The card param is a hashref such as one returned from ["get\_card"](#get_card).
+The bank param is a hashref such as one returned from ["get\_bank\_account"](#get_bank_account).
 Returns the created debit.
 
 Example:

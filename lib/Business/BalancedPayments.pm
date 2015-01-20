@@ -324,10 +324,12 @@ Example response:
 =head2 create_debit
 
     create_debit($debit, card => $card)
+    create_debit($debit, bank => $bank)
 
-Debits a card.
+Debits a card or a bank.
 The C<$debit> hashref must contain an amount.
 The card param is a hashref such as one returned from L</get_card>.
+The bank param is a hashref such as one returned from L</get_bank_account>.
 Returns the created debit.
 
 Example:
